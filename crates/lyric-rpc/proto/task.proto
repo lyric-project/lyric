@@ -1,0 +1,142 @@
+syntax = "proto3";
+package task;
+
+/// Language of the code
+enum Language {
+  PYTHON = 0;
+  NODEJS = 1;
+  SHELL = 2;
+}
+
+enum DataFormat {
+  RAW = 0;
+  PICKLE = 1;
+  MSGPACK = 2;
+  PROTOBUF = 3;
+}
+
+message DataObject {
+  string object_id = 1;
+  DataFormat format = 2;
+  bytes data = 3;
+}
+
+enum TaskState {
+  TASK_PENDING = 0;
+  TASK_RUNNING = 1;
+  TASK_SUCCEEDED = 2;
+  TASK_FAILED = 3;
+}
+
+message ExecutionUnit {
+  string unit_id = 1;
+  Language language = 2;
+  DataObject code = 3;
+}
+
+enum ExecutionMode {
+  LOCAL = 0;
+  DOCKER = 1;
+  KUBERNETES = 2;
+}
+
+// Driver is the master node
+service DriverRpc {
+  rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerReply);
+
+  // Task state change message
+  rpc TaskStateChange (TaskStateRequest) returns (TaskStateReply);
+}
+
+// Send request to worker
+service WorkerRpc {
+  rpc StopWorker (StopWorkerRequest) returns (StopWorkerReply);
+
+  //  Submit task to worker, wait for the task to complete
+  rpc SubmitTask (TaskSubmitRequest) returns (TaskSubmitReply);
+
+  // Submit task to worker, return a stream of task state
+  rpc ToStreamSubmitTask (TaskSubmitRequest) returns (stream TaskSubmitReply);
+
+  rpc StreamTransformSubmitTask (stream TaskStreamSubmitRequest) returns (stream TaskSubmitReply);
+
+  rpc UnStreamTransformSubmitTask (stream TaskStreamSubmitRequest) returns (TaskSubmitReply);
+}
+
+
+// TaskInfo is the task information
+message TaskInfo {
+  string task_id = 1;
+  string name = 2;
+  ExecutionUnit exec_unit = 3;
+  ExecutionMode exec_mode = 4;
+  DataObject input = 5;
+  // Unique id of the environment
+}
+
+message TaskStateInfo {
+  string task_id = 1;
+  TaskState state = 2;
+  int64 start_time = 3;
+  int64 end_time = 4;
+  string worker_id = 5;
+  DataObject output = 6;
+  int32 exit_code = 7;
+  string stdout = 8;
+  string stderr = 9;
+}
+
+message TaskSubmitRequest {
+  // Version of the protocol, e.g., 1.0, 1.1, 2.0, 2.1
+  float version = 1;
+  TaskInfo task = 2;
+}
+
+message TaskStreamSubmitRequest {
+  float version = 1;
+  oneof request {
+    TaskInfo task = 2;
+    DataObject input = 3;
+  }
+}
+
+message TaskSubmitReply {
+  float version = 1;
+  TaskStateInfo task = 2;
+}
+
+message TaskStateRequest {
+  float version = 1;
+  TaskStateInfo task = 2;
+}
+
+message TaskStateReply {
+  float version = 1;
+}
+
+message WorkerInfo {
+  string worker_id = 1;
+  string address = 2;
+  uint32 total_memory = 3;
+  uint32 used_memory = 4;
+  uint32 total_cpu = 5;
+  uint32 used_cpu = 6;
+}
+
+message RegisterWorkerRequest {
+  float version = 1;
+   WorkerInfo worker = 2;
+}
+
+message RegisterWorkerReply {
+  float version = 1;
+  string status = 2;
+}
+
+message StopWorkerRequest {
+  string worker_id = 1;
+  string message = 2;
+}
+
+message StopWorkerReply {
+}

@@ -1,0 +1,48 @@
+[package]
+name = "lyric-py"
+version = { workspace = true}
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+readme = "../../README.md"
+description = "Python bindings for Lyric: a high-performance, flexible, multi-language code execution framework for your AI apps."
+
+include = [
+    "/pyproject.toml",
+    "/README.md",
+    "/LICENSE",
+    "/Makefile",
+    "/build.rs",
+    "/rust-toolchain",
+    "/src",
+    "/python/lyric",
+    "/tests",
+    "/.cargo",
+    "!__pycache__",
+    "!tests/.hypothesis",
+    "!tests/.pytest_cache",
+    "!*.so",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html[lib]
+[lib]
+name = "lyric"
+crate-type = ["cdylib"]
+
+[dependencies]
+lyric-rpc = { workspace = true }
+lyric-utils = { workspace = true }
+lyric = { workspace = true }
+
+tokio = { workspace = true }
+pyo3 = { workspace = true, features = ["extension-module", "experimental-async"] }
+rmp-serde = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+pyo3-pylogger = { workspace = true }
+futures = { workspace = true }
+tokio-stream = { workspace = true }

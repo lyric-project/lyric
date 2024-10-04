@@ -1,0 +1,22 @@
+[package]
+name = "lyric-utils"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+readme = "../../README.md"
+description = "Private utilities for the Lyric project."
+
+[dependencies]
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+local-ip-address = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true,  features = ["chrono", "env-filter", "json"] }
+tracing-appender = { workspace = true }
+lazy_static = { workspace = true }
+serde_json = "1.0.128"

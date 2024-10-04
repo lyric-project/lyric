@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/*",
+    "bindings/*"
+]
+default-members = [
+    "crates/*",
+]
+
+[workspace.package]
+version = "0.1.0-rc2"
+authors = ["fangyinc <staneyffer@gmail.com>"]
+edition = "2021"
+homepage = "https://github.com/fangyinc/lyric"
+license = "MIT"
+repository = "https://github.com/fangyinc/lyric"
+
+[workspace.dependencies]
+tokio = "1.0"
+async-trait = "0.1.82"
+thiserror = "1.0"
+anyhow = "1.0"
+chrono = "0.4.38"
+tonic = "0.12"
+prost = "0.13"
+rmp-serde = "1.3.0"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+tracing-appender = "0.2.3"
+lazy_static = "1.5.0"
+serde = { version = "1.0.209", features = ["derive"] }
+rand = { version = "0.8.5"}
+local-ip-address = "0.6.2"
+uuid = { version = "1.10.0", features = ["v4"] }
+clap = { version = "4.5.17", features = ["derive"] }
+bollard = "0.17.1"
+futures-util = "0.3.30"
+futures = "0.3.30"
+bytes = "1.7.1"
+tokio-util = { version = "0.7.12", features = ["io"] }
+tokio-stream = { version = "0.1.16", features = ["io-util"] }
+pyo3 = { version = "0.22.2" }
+pyo3-pylogger = "0.3.0"
+
+lyric = { version = "0.1.0-rc2", path = "crates/lyric", default-features = false }
+lyric-utils = { version = "0.1.0-rc2", path = "crates/lyric-utils", default-features = false }
+lyric-rpc = { version = "0.1.0-rc2", path = "crates/lyric-rpc", default-features = false }
+lyric-py = { version = "0.1.0-rc2", path = "bindings/lyric-py", default-features = false }

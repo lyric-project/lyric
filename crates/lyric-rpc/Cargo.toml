@@ -1,0 +1,22 @@
+[package]
+name = "lyric-rpc"
+version = { workspace = true }
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+readme = "../../README.md"
+description = "Private RPC utilities for the Lyric project."
+
+[dependencies]
+#tonic = {workspace = true, features = ["codegen", "prost"] }
+tonic = {workspace = true, features = ["server"]}
+prost = {workspace = true}
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+async-trait = { workspace = true }
+serde = { workspace = true }
+lyric-utils = { workspace = true }
+
+[build-dependencies]
+tonic-build = "0.12"

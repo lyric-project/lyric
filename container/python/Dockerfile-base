@@ -1,0 +1,33 @@
+# Base image
+FROM ubuntu:22.04
+
+# Ignore interactive prompts during the build process
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Configure the Cargo mirror source
+RUN mkdir -p ~/.cargo \
+    && echo '[source.crates-io]' >> ~/.cargo/config.toml \
+    && echo 'replace-with = "ustc"' >> ~/.cargo/config.toml \
+    && echo '[source.ustc]' >> ~/.cargo/config.toml \
+    && echo 'registry = "https://mirrors.ustc.edu.cn/crates.io-index"' >> ~/.cargo/config.toml
+
+# Install the necessary tools and dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    python3.10 \
+    python3.10-dev \
+    python3-pip \
+    protobuf-compiler \
+    libprotobuf-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install maturin
+RUN pip3 install maturin
+
+# Set the working directory
+WORKDIR /app
