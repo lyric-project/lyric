@@ -45,9 +45,10 @@ jobs:
           sccache: 'true'
 #          manylinux: auto
           manylinux: ${{ matrix.platform.target == 'aarch64' && '2_24' || 'auto' }}
+          docker-options: |
+            -e PROTOC_ARCH=${{ matrix.platform.target }}
           before-script-linux: |
             PROTOC_VERSION="28.2"
-            PROTOC_ARCH=${{ matrix.target }}
             if [ "$PROTOC_ARCH" = "i686" ]; then
               PROTOC_ARCH="x86_32"
             elif [ "$PROTOC_ARCH" = "aarch64" ]; then
@@ -101,9 +102,10 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: musllinux_1_2
+          docker-options: |
+            -e PROTOC_ARCH=${{ matrix.platform.target }}
           before-script-linux: |
             PROTOC_VERSION="28.2"
-            PROTOC_ARCH=${{ matrix.target }}
             if [ "$PROTOC_ARCH" = "i686" ]; then
               PROTOC_ARCH="x86_32"
             elif [ "$PROTOC_ARCH" = "aarch64" ]; then
