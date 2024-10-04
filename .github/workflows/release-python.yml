@@ -44,7 +44,7 @@ jobs:
       - name: Install Protobuf Compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
+          sudo apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -79,7 +79,7 @@ jobs:
       - name: Install Protobuf Compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
+          sudo apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -159,7 +159,7 @@ jobs:
       - name: Install Protobuf Compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
+          sudo apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
