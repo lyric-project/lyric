@@ -47,7 +47,8 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
-          manylinux: auto
+#          manylinux: auto
+          manylinux: ${{ matrix.platform.target == 'aarch64' && '2_24' || 'auto' }}
           docker-options: |
             -e PROTOC=/usr/bin/protoc
           before-script-linux: |
