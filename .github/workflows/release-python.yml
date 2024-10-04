@@ -47,7 +47,17 @@ jobs:
           manylinux: ${{ matrix.platform.target == 'aarch64' && '2_24' || 'auto' }}
           before-script-linux: |
             PROTOC_VERSION="28.2"
-            PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${{ matrix.target }}.zip"
+            PROTOC_ARCH=${{ matrix.target }}
+            if [ "$PROTOC_ARCH" = "i686" ]; then
+              PROTOC_ARCH="x86_32"
+            elif [ "$PROTOC_ARCH" = "aarch64" ]; then
+              PROTOC_ARCH="aarch_64"
+            elif [ "$PROTOC_ARCH" = "ppc64le" ]; then
+              PROTOC_ARCH="ppcle_64"
+            elif [ "$PROTOC_ARCH" = "s390x" ]; then
+              PROTOC_ARCH="s390_64"
+            fi
+            PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip"
             curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"
             unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
             unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
@@ -93,7 +103,13 @@ jobs:
           manylinux: musllinux_1_2
           before-script-linux: |
             PROTOC_VERSION="28.2"
-            PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${{ matrix.target }}.zip"
+            PROTOC_ARCH=${{ matrix.target }}
+            if [ "$PROTOC_ARCH" = "i686" ]; then
+              PROTOC_ARCH="x86_32"
+            elif [ "$PROTOC_ARCH" = "aarch64" ]; then
+              PROTOC_ARCH="aarch_64"
+            fi
+            PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip"
             curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"
             unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
             unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
