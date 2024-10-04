@@ -41,7 +41,7 @@ bytes = "1.7.1"
 tokio-util = { version = "0.7.12", features = ["io"] }
 tokio-stream = { version = "0.1.16", features = ["io-util"] }
 pyo3 = { version = "0.22.2" }
-pyo3-pylogger = "0.3.0"
+#pyo3-pylogger = "0.3.0"
 
 lyric = { version = "0.1.0-rc2", path = "crates/lyric", default-features = false }
 lyric-utils = { version = "0.1.0-rc2", path = "crates/lyric-utils", default-features = false }

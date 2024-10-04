@@ -55,7 +55,7 @@ jobs:
           docker-options: |
             -e PROTOC=/usr/bin/protoc
           before-script-linux: |
-            apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
+            yum install -y protobuf-compiler
             echo "Which protoc: $(which protoc)"
             echo "Environment variables: $PROTOC"
             ls -l /usr/bin/protoc
