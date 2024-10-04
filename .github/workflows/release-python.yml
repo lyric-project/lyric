@@ -37,10 +37,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install Protobuf Compiler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -49,13 +45,21 @@ jobs:
           sccache: 'true'
 #          manylinux: auto
           manylinux: ${{ matrix.platform.target == 'aarch64' && '2_24' || 'auto' }}
-          docker-options: |
-            -e PROTOC=/usr/bin/protoc
           before-script-linux: |
-            yum install -y protobuf-compiler
-            echo "Which protoc: $(which protoc)"
-            echo "Environment variables: $PROTOC"
-            ls -l /usr/bin/protoc
+            PROTOC_VERSION="28.2"
+            PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${{ matrix.target }}.zip"
+            curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"
+            unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+            unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+            rm -f $PROTOC_ZIP
+            echo "PROTOC=/usr/local/bin/protoc" >> $GITHUB_ENV
+#          docker-options: |
+#            -e PROTOC=/usr/bin/protoc
+#          before-script-linux: |
+#            yum install -y protobuf-compiler
+#            echo "Which protoc: $(which protoc)"
+#            echo "Environment variables: $PROTOC"
+#            ls -l /usr/bin/protoc
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -80,10 +84,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - name: Install Protobuf Compiler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -91,13 +91,21 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: musllinux_1_2
-          docker-options: |
-            -e PROTOC=/usr/bin/protoc
           before-script-linux: |
-            apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
-            echo "Which protoc: $(which protoc)"
-            echo "Environment variables: $PROTOC"
-            ls -l /usr/bin/protoc
+            PROTOC_VERSION="28.2"
+            PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${{ matrix.target }}.zip"
+            curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"
+            unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+            unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+            rm -f $PROTOC_ZIP
+            echo "PROTOC=/usr/local/bin/protoc" >> $GITHUB_ENV
+#          docker-options: |
+#            -e PROTOC=/usr/bin/protoc
+#          before-script-linux: |
+#            apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
+#            echo "Which protoc: $(which protoc)"
+#            echo "Environment variables: $PROTOC"
+#            ls -l /usr/bin/protoc
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
