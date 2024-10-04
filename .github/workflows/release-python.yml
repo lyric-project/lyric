@@ -52,6 +52,8 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: auto
+          docker-options: |
+            -e PROTOC=/usr/bin/protoc
           before-script-linux: |
             apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Upload wheels
@@ -89,6 +91,8 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: musllinux_1_2
+          docker-options: |
+            -e PROTOC=/usr/bin/protoc
           before-script-linux: |
             apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Upload wheels
