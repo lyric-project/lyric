@@ -47,6 +47,7 @@ jobs:
             -e PROTOC_ARCH=${{ matrix.platform.target }}
             -e PROTOC=/usr/local/bin/protoc
           before-script-linux: |
+            apt-get update && apt-get install -y unzip
             PROTOC_VERSION="28.2"
             if [ "$PROTOC_ARCH" = "i686" ]; then
               PROTOC_ARCH="x86_32"
@@ -102,7 +103,6 @@ jobs:
             -e PROTOC_ARCH=${{ matrix.platform.target }}
             -e PROTOC=/usr/local/bin/protoc
           before-script-linux: |
-            apt-get update && apt-get install -y unzip
             PROTOC_VERSION="28.2"
             if [ "$PROTOC_ARCH" = "i686" ]; then
               PROTOC_ARCH="x86_32"
