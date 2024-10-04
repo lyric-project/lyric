@@ -81,7 +81,7 @@ impl PyLyric {
     }
 
     fn start_worker(&self, config: PyWorkerConfig) -> PyResult<()> {
-        pyo3_pylogger::register("lyric");
+        // pyo3_pylogger::register("lyric");
         self.lyric
             .start_worker(WorkerConfig::from(config))
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
