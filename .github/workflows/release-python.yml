@@ -52,6 +52,8 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: auto
+          before-script-linux: |
+            apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -87,6 +89,8 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: musllinux_1_2
+          before-script-linux: |
+            apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
