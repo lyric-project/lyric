@@ -26,8 +26,8 @@ jobs:
         platform:
           - runner: ubuntu-latest
             target: x86_64
-#          - runner: ubuntu-latest
-#            target: aarch64
+          - runner: ubuntu-latest
+            target: aarch64
 #          - runner: ubuntu-latest
 #            target: armv7
     steps:
@@ -83,8 +83,8 @@ jobs:
         platform:
           - runner: ubuntu-latest
             target: x86_64
-#          - runner: ubuntu-latest
-#            target: aarch64
+          - runner: ubuntu-latest
+            target: aarch64
 #          - runner: ubuntu-latest
 #            target: armv7
     steps:
@@ -127,73 +127,69 @@ jobs:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
 
-#  windows:
-#    runs-on: ${{ matrix.platform.runner }}
-#    strategy:
-#      matrix:
-#        platform:
-#          - runner: windows-latest
-#            target: x64
-#          - runner: windows-latest
-#            target: x86
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-python@v5
-#        with:
-#          python-version: 3.x
-#          architecture: ${{ matrix.platform.target }}
-#      - name: Install Protobuf Compiler
-#        run: |
-#          choco install protoc
-#      - name: Build wheels
-#        uses: PyO3/maturin-action@v1
-#        with:
-#          target: ${{ matrix.platform.target }}
-#          args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
-#          sccache: 'true'
-#      - name: Upload wheels
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: wheels-windows-${{ matrix.platform.target }}
-#          path: dist
+  windows:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: windows-latest
+            target: x64
+          - runner: windows-latest
+            target: x86
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+          architecture: ${{ matrix.platform.target }}
+      - name: Install Protobuf Compiler
+        run: |
+          choco install protoc
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
+          sccache: 'true'
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-${{ matrix.platform.target }}
+          path: dist
 
-#  macos:
-#    runs-on: ${{ matrix.platform.runner }}
-#    strategy:
-#      matrix:
-#        platform:
-#          - runner: macos-12
-#            target: x86_64
-#          - runner: macos-14
-#            target: aarch64
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-python@v5
-#        with:
-#          python-version: 3.x
-#      - name: Install Protobuf Compiler
-#        run: |
-#          brew install protobuf
-#      - name: Build wheels
-#        uses: PyO3/maturin-action@v1
-#        with:
-#          target: ${{ matrix.platform.target }}
-#          args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
-#          sccache: 'true'
-#      - name: Upload wheels
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: wheels-macos-${{ matrix.platform.target }}
-#          path: dist
+  macos:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: macos-12
+            target: x86_64
+          - runner: macos-14
+            target: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Install Protobuf Compiler
+        run: |
+          brew install protobuf
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter --manifest-path bindings/lyric-py/Cargo.toml
+          sccache: 'true'
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.platform.target }}
+          path: dist
 
   sdist:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Protobuf Compiler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler libprotobuf-dev
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -205,17 +201,17 @@ jobs:
           name: wheels-sdist
           path: dist
 
-#  release:
-#    name: Release
-#    runs-on: ubuntu-latest
-#    if: "startsWith(github.ref, 'refs/tags/')"
-#    needs: [linux, musllinux, windows, macos, sdist]
-#    steps:
-#      - uses: actions/download-artifact@v4
-#      - name: Publish to PyPI
-#        uses: PyO3/maturin-action@v1
-#        env:
-#          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-#        with:
-#          command: upload
-#          args: --non-interactive --skip-existing wheels-*/*
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    needs: [linux, musllinux, windows, macos, sdist]
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        with:
+          command: upload
+          args: --non-interactive --skip-existing wheels-*/*
