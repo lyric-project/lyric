@@ -27,8 +27,6 @@ jobs:
           - runner: ubuntu-latest
             target: x86_64
           - runner: ubuntu-latest
-            target: x86
-          - runner: ubuntu-latest
             target: aarch64
           - runner: ubuntu-latest
             target: armv7
@@ -47,6 +45,7 @@ jobs:
           manylinux: ${{ matrix.platform.target == 'aarch64' && '2_24' || 'auto' }}
           docker-options: |
             -e PROTOC_ARCH=${{ matrix.platform.target }}
+            -e PROTOC=/usr/local/bin/protoc
           before-script-linux: |
             PROTOC_VERSION="28.2"
             if [ "$PROTOC_ARCH" = "i686" ]; then
@@ -63,7 +62,6 @@ jobs:
             unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
             unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
             rm -f $PROTOC_ZIP
-            echo "PROTOC=/usr/local/bin/protoc" >> $GITHUB_ENV
 #          docker-options: |
 #            -e PROTOC=/usr/bin/protoc
 #          before-script-linux: |
@@ -104,6 +102,7 @@ jobs:
           manylinux: musllinux_1_2
           docker-options: |
             -e PROTOC_ARCH=${{ matrix.platform.target }}
+            -e PROTOC=/usr/local/bin/protoc
           before-script-linux: |
             PROTOC_VERSION="28.2"
             if [ "$PROTOC_ARCH" = "i686" ]; then
@@ -116,7 +115,6 @@ jobs:
             unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
             unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
             rm -f $PROTOC_ZIP
-            echo "PROTOC=/usr/local/bin/protoc" >> $GITHUB_ENV
 #          docker-options: |
 #            -e PROTOC=/usr/bin/protoc
 #          before-script-linux: |
