@@ -56,6 +56,7 @@ jobs:
             -e PROTOC=/usr/bin/protoc
           before-script-linux: |
             apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
+            echo "Which protoc: $(which protoc)"
             echo "Environment variables: $PROTOC"
             ls -l /usr/bin/protoc
       - name: Upload wheels
@@ -97,6 +98,7 @@ jobs:
             -e PROTOC=/usr/bin/protoc
           before-script-linux: |
             apt-get update && apt-get install -y protobuf-compiler libprotobuf-dev
+            echo "Which protoc: $(which protoc)"
             echo "Environment variables: $PROTOC"
             ls -l /usr/bin/protoc
       - name: Upload wheels
