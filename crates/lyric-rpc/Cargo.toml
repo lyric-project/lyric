@@ -11,9 +11,11 @@ description = "Private RPC utilities for the Lyric project."
 
 [dependencies]
 #tonic = {workspace = true, features = ["codegen", "prost"] }
-tonic = {workspace = true, features = ["server"]}
+#tonic = {workspace = true, features = ["server"]}
+#tonic = {version = "=0.12.0", features = ["server"]}
+tonic = {workspace = true, default-features = false, features = ["prost", "codegen", "channel"]}
 prost = {workspace = true}
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, default-features = false, features = ["macros", "rt-multi-thread"] }
 async-trait = { workspace = true }
 serde = { workspace = true }
 lyric-utils = { workspace = true }

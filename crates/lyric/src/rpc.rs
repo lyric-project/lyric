@@ -4,8 +4,8 @@ use lyric_rpc::task::driver_rpc_server::DriverRpc;
 use lyric_rpc::task::worker_rpc_server::WorkerRpc;
 use lyric_rpc::task::{
     RegisterWorkerReply, RegisterWorkerRequest, StopWorkerReply, StopWorkerRequest, TaskInfo,
-    TaskStateInfo, TaskStateReply, TaskStateRequest, TaskStreamSubmitRequest, TaskSubmitReply,
-    TaskSubmitRequest,
+    TaskStateInfo, TaskStateReply, TaskStateRequest, TaskStopReply, TaskStopRequest,
+    TaskStreamSubmitRequest, TaskSubmitReply, TaskSubmitRequest,
 };
 use lyric_utils::err::TaskError;
 use std::pin::Pin;
@@ -14,7 +14,7 @@ use tokio::sync::{mpsc, Mutex};
 use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 use tonic::{transport::Server, Request, Response, Status, Streaming};
 
-pub(crate) const RPC_PROTOCOL_VERSION: f32 = 1.0;
+pub(crate) const RPC_PROTOCOL_VERSION: i32 = 1;
 
 type RpcResult<T> = Result<Response<T>, Status>;
 type ResponseStream = Pin<Box<dyn Stream<Item = Result<TaskSubmitReply, Status>> + Send>>;
@@ -130,6 +130,16 @@ impl WorkerRpc for WorkerService {
             Err(e) => Err(e),
             _ => Err(Status::internal("Some error when submit task")),
         }
+    }
+
+    async fn stop_task(&self, request: Request<TaskStopRequest>) -> RpcResult<TaskStopReply> {
+        let request = request.into_inner();
+        let version = request.version;
+        self.lyric
+            .stop_task(request.task_id)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))
+            .map(|_| Response::new(TaskStopReply { version }))
     }
 
     type ToStreamSubmitTaskStream = ResponseStream;

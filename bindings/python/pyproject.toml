@@ -1,0 +1,56 @@
+[project]
+name = "python"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Fangyin Cheng", email = "staneyffer@gmail.com" }
+]
+dependencies = []
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[tool.rye]
+managed = true
+virtual = true
+dev-dependencies = [
+    "pip",
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "maturin>=1.7,<2.0",
+    "tomli>=2.0.2",
+    "tomli-w>=1.1.0",
+]
+
+[tool.rye.workspace]
+members = ["lyric-*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.rye.scripts]
+fmt = { chain = [
+    "black lyric-task",
+    "black lyric-py",
+    "isort lyric-task",
+    "isort lyric-py",
+]}
+fmt-check = { chain = [
+    "black --check lyric-task",
+    "black --check lyric-py",
+    "isort --check lyric-task",
+    "isort --check lyric-py",
+]}
+# Sync version number across all packages
+sync-version = "python scripts/sync_version.py"

@@ -1,0 +1,7 @@
+package lyric:task@0.2.0;
+
+interface binary-task {
+    use types.{binary-request, binary-response};
+
+    run: func(request: binary-request) -> result<binary-response, string>;
+}

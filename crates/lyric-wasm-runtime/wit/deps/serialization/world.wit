@@ -1,0 +1,5 @@
+package lyric:serialization@0.2.0;
+
+world imports {
+    import msgpack;
+}

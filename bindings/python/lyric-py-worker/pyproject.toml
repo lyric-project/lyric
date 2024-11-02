@@ -1,0 +1,35 @@
+[project]
+name = "lyric-py-worker"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Fangyin Cheng", email = "staneyffer@gmail.com" },
+]
+dependencies = [
+    "lyric-task",
+]
+readme = "README.md"
+requires-python = ">= 3.10"
+
+[build-system]
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "componentize-py>=0.15.2",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/lyric_py_worker",
+]
+include = [
+    "src/lyric_py_worker/*.wasm",
+]

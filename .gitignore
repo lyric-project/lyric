@@ -5,12 +5,12 @@
 .ENV
 .env
 .ipynb_checkpoints/
-.python-version
 .yarn/
 coverage.lcov
 coverage.xml
 profile.json
 polars/vendor
+tmp_expanded.rs
 
 # OS
 .DS_Store

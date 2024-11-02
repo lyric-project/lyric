@@ -1,5 +1,5 @@
 use crate::env::EnvironmentConfigMessage;
-use crate::task::TaskDescription;
+use crate::task::{TaskDescription, TaskID};
 use crate::worker::WorkerID;
 use lyric_rpc::task::{RegisterWorkerRequest, StopWorkerRequest, TaskStateInfo, TaskStateRequest};
 use lyric_utils::prelude::{Error, TaskError};
@@ -35,6 +35,10 @@ pub(crate) enum RpcMessage {
         /// The environment configuration for the task.
         env: Option<EnvironmentConfigMessage>,
     },
+    StopTask {
+        task_id: TaskID,
+        tx: ResultSender<(), Error>,
+    },
     TaskStateChange(TaskStateRequest),
     RegisterWorker(RegisterWorkerRequest),
     StopWorker(StopWorkerRequest),
@@ -45,6 +49,16 @@ pub enum LangWorkerMessage {
     SubmitTask {
         rpc: TaskDescription,
         tx: ResultSender<TaskStateResult, Error>,
+        worker_id: String,
+    },
+    SubmitLaunchComponent {
+        rpc: TaskDescription,
+        tx: ResultSender<TaskStateResult, Error>,
+        worker_id: String,
+    },
+    StopComponentTask {
+        task_id: TaskID,
+        tx: ResultSender<(), Error>,
         worker_id: String,
     },
 }
@@ -98,6 +112,9 @@ impl RpcMessage {
         match self {
             RpcMessage::SubmitTask { rpc, tx: _, env: _ } => {
                 format!("SubmitTask: {:?}", rpc.task_id)
+            }
+            RpcMessage::StopTask { task_id, tx: _ } => {
+                format!("StopTask: {:?}", task_id)
             }
             RpcMessage::TaskStateChange(_) => {
                 format!("TaskStateChange")

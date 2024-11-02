@@ -8,6 +8,7 @@ use crate::{LangWorkerMessage, TaskDescription, TokioRuntime, WorkerConfig};
 use lyric_rpc::task::{RegisterWorkerRequest, TaskStateInfo, WorkerInfo};
 use lyric_utils::log::init_tracing_subscriber;
 use lyric_utils::prelude::*;
+use lyric_wasm_runtime::WasmRuntime;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::future::Future;
@@ -39,6 +40,7 @@ struct LyricInner {
     rpc_shutdown: Mutex<Option<oneshot::Sender<()>>>,
     config: Arc<Config>,
     callbacks: Mutex<HashMap<String, TaskCallback>>,
+    wasm_runtime: Mutex<Option<WasmRuntime>>,
 }
 #[derive(Clone, Debug)]
 pub struct Lyric {
@@ -81,6 +83,7 @@ impl Lyric {
             rpc_shutdown: Mutex::new(None),
             config,
             callbacks: Mutex::new(HashMap::new()),
+            wasm_runtime: Mutex::new(None),
         };
         Ok(Self {
             inner: Arc::new(inner),
@@ -152,6 +155,8 @@ impl Lyric {
         let public_addr = self.inner.config.parse_public_address("http")?;
         let worker_id = self.inner.config.parse_node_id();
 
+        let inner = self.inner.clone();
+
         self.inner.runtime.runtime.spawn(async move {
             tracing::info!("Starting worker server on {}", addr);
             let worker_service = WorkerService::new(tx_to_core, pg);
@@ -160,7 +165,9 @@ impl Lyric {
             tracing::info!("Connect to driver: {}", driver_addr);
 
             let (tx_server, rx_server) = oneshot::channel();
-
+            // Start wasm runtime
+            let wasm_rt = WasmRuntime::new(None).await.unwrap();
+            let wasm_handler_address = wasm_rt.address().to_string();
             rt.runtime.spawn(async move {
                 let _ = rx_server.await;
                 let mut driver_client = connect_to_driver(&driver_addr).await.unwrap();
@@ -169,6 +176,7 @@ impl Lyric {
                     worker: Some(WorkerInfo {
                         worker_id,
                         address: public_addr,
+                        handler_address: wasm_handler_address,
                         total_memory: 0,
                         used_memory: 0,
                         total_cpu: 0,
@@ -178,6 +186,7 @@ impl Lyric {
                 driver_client.register_worker(req).await.unwrap();
                 tracing::info!("Worker registered to driver");
             });
+            inner.wasm_runtime.lock().await.replace(wasm_rt);
             let _ = Server::builder()
                 .add_service(WorkerRpcServer::new(worker_service))
                 .serve_with_shutdown(socket_addr, async {
@@ -318,6 +327,18 @@ impl Lyric {
         Ok(task_id)
     }
 
+    pub async fn stop_task(&self, task_id: String) -> Result<(), Error> {
+        let (tx, rx) = oneshot::channel();
+        self.call_core(
+            RpcMessage::StopTask {
+                task_id: task_id.into(),
+                tx,
+            },
+            rx,
+        )
+        .await
+    }
+
     /// Call core with a message and wait for the response
     pub(crate) async fn call_core<T>(
         &self,
@@ -342,5 +363,19 @@ impl Lyric {
                 ))
             }
         }
+    }
+    pub async fn with_wasm_runtime<F, U, T>(&self, f: F) -> Result<T, Error>
+    where
+        F: FnOnce(WasmRuntime) -> U + Send + Sync + 'static,
+        U: Future<Output = Result<T, Error>> + Send + 'static,
+    {
+        let wasm_rt = self.inner.wasm_runtime.lock().await;
+        let rt = wasm_rt
+            .as_ref()
+            .ok_or(Error::InternalError("Wasm runtime not found".to_string()))?
+            .clone();
+        drop(wasm_rt);
+        let res = f(rt).await;
+        res
     }
 }

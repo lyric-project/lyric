@@ -6,6 +6,7 @@ mod message;
 mod rpc;
 mod runtime;
 mod task;
+pub mod task_ext;
 mod worker;
 
 pub use config::{Config, DriverConfig, WorkerConfig};

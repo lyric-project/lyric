@@ -1,0 +1,5 @@
+shortuuid
+cloudpickle
+rich
+click
+componentize-py>=0.15.2

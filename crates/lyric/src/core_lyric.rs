@@ -12,9 +12,11 @@ use crate::message::{
     LangWorkerMessage, NotifyMessage, PendingTask, ResultSender, RpcMessage, TaskStateResult,
     TriggerScheduleEvent,
 };
-use crate::task::TaskDescription;
+use crate::task::{TaskDescription, TaskID};
 use crate::worker::WorkerID;
-use lyric_rpc::task::{Language, RegisterWorkerRequest, TaskStateInfo, TaskStateRequest};
+use lyric_rpc::task::{
+    ExecutionMode, Language, RegisterWorkerRequest, TaskStateInfo, TaskStateRequest,
+};
 use lyric_utils::prelude::*;
 
 #[derive(Debug)]
@@ -149,28 +151,16 @@ impl CoreLyric {
                 } else {
                     let worker_id = self.config.node_id.as_ref().unwrap().to_string();
                     tracing::info!("Receive SubmitTask message, {:?}, current is worker", rpc);
-                    match rpc.language {
-                        Some(Language::Shell) => {
-                            tracing::info!("Current language is shell, send to shell worker");
-                            // self.handle_submit_task_local(rpc, tx, worker_id).await;
-                            todo!()
-                        }
-                        _ => {
-                            tracing::info!("Current language is not 2, send to language worker");
-                            match self.tx_lang_worker.as_ref() {
-                                Some(tx_lang_worker) => {
-                                    let _ = tx_lang_worker.send(LangWorkerMessage::SubmitTask {
-                                        rpc,
-                                        tx,
-                                        worker_id,
-                                    });
-                                }
-                                None => {
-                                    tracing::error!("Language worker tx is not ready");
-                                }
-                            }
-                        }
-                    }
+                    self.handle_submit_on_worker(rpc, tx, worker_id).await;
+                }
+            }
+            RpcMessage::StopTask { task_id, tx } => {
+                if self.config.is_driver {
+                    tracing::info!("Receive StopTask message, {:?}", task_id);
+                    self.worker_manager.stop_task(task_id, tx).await;
+                } else {
+                    tracing::info!("Receive StopTask message, {:?}", task_id);
+                    self.handle_stop_task_on_worker(task_id, tx).await;
                 }
             }
             RpcMessage::TaskStateChange(req) => {
@@ -194,6 +184,67 @@ impl CoreLyric {
             }
         }
         Ok(())
+    }
+
+    async fn handle_submit_on_worker(
+        &mut self,
+        task_rpc: TaskDescription,
+        tx: ResultSender<TaskStateResult, Error>,
+        worker_id: String,
+    ) {
+        match task_rpc.language {
+            Some(Language::Shell) => {
+                tracing::info!("Current language is shell, send to shell worker");
+                // self.handle_submit_task_local(rpc, tx, worker_id).await;
+                todo!()
+            }
+            _ => {
+                tracing::info!("Current language is not 2, send to language worker");
+                match self.tx_lang_worker.as_ref() {
+                    Some(tx_lang_worker) => match task_rpc.exec_mode {
+                        ExecutionMode::Local => {
+                            let msg = LangWorkerMessage::SubmitTask {
+                                rpc: task_rpc,
+                                tx,
+                                worker_id,
+                            };
+                            let _ = tx_lang_worker.send(msg);
+                        }
+                        _ => {
+                            let msg = LangWorkerMessage::SubmitLaunchComponent {
+                                rpc: task_rpc,
+                                tx,
+                                worker_id,
+                            };
+                            let _ = tx_lang_worker.send(msg);
+                        }
+                    },
+                    None => {
+                        tracing::error!("Language worker tx is not ready");
+                    }
+                }
+            }
+        }
+    }
+
+    async fn handle_stop_task_on_worker(&mut self, task_id: TaskID, tx: ResultSender<(), Error>) {
+        match self.tx_lang_worker.as_ref() {
+            Some(tx_lang_worker) => {
+                // TODO: Just support stop task for component task(WASM task) now
+                let msg = LangWorkerMessage::StopComponentTask {
+                    task_id,
+                    tx,
+                    worker_id: self.config.node_id.as_ref().unwrap().to_string(),
+                };
+                let _ = tx_lang_worker.send(msg);
+            }
+            None => {
+                tracing::error!("Language worker tx is not ready");
+                let _ = tx.send(Err(Error::InternalError(
+                    "Language worker tx is not ready".to_string(),
+                )));
+            }
+        }
     }
 
     async fn handle_submit_task_remote(

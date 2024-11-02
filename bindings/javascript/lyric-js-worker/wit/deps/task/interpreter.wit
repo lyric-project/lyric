@@ -1,0 +1,10 @@
+package lyric:task@0.2.0;
+
+interface interpreter-task {
+
+  use types.{interpreter-request, interpreter-response, interpreter-output-response};
+
+  run: func(request: interpreter-request) -> result<interpreter-response, string>;
+
+  run1: func(request: interpreter-request, call-name: string, input: list<u8>) -> result<interpreter-output-response, string>;
+}

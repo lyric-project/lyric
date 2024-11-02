@@ -1,0 +1,7 @@
+package lyric:hello;
+
+world lyric-py-task {
+  import lyric:serialization/msgpack@0.2.0;
+  export lyric:task/interpreter-task@0.2.0;
+  export lyric:task/binary-task@0.2.0;
+}

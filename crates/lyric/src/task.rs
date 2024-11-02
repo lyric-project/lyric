@@ -69,7 +69,7 @@ impl TaskDescription {
 
     pub async fn to_rpc_task_info(
         &self,
-        version: f32,
+        version: i32,
     ) -> (
         Option<TaskSubmitRequest>,
         Option<impl Stream<Item = TaskStreamSubmitRequest>>,
@@ -202,6 +202,10 @@ impl TaskID {
     {
         TaskID(id.into())
     }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl From<TaskID> for String {
@@ -234,5 +238,11 @@ impl TryFrom<TaskInfo> for TaskDescription {
             task_info.input,
             None,
         ))
+    }
+}
+
+impl From<String> for TaskID {
+    fn from(id: String) -> Self {
+        TaskID(id)
     }
 }

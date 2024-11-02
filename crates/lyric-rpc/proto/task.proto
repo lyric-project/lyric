@@ -4,8 +4,9 @@ package task;
 /// Language of the code
 enum Language {
   PYTHON = 0;
-  NODEJS = 1;
+  JAVA_SCRIPT = 1;
   SHELL = 2;
+  RUST = 3;
 }
 
 enum DataFormat {
@@ -38,6 +39,7 @@ enum ExecutionMode {
   LOCAL = 0;
   DOCKER = 1;
   KUBERNETES = 2;
+  WEB_ASSEMBLY = 3;
 }
 
 // Driver is the master node
@@ -54,6 +56,8 @@ service WorkerRpc {
 
   //  Submit task to worker, wait for the task to complete
   rpc SubmitTask (TaskSubmitRequest) returns (TaskSubmitReply);
+
+  rpc StopTask (TaskStopRequest) returns (TaskStopReply);
 
   // Submit task to worker, return a stream of task state
   rpc ToStreamSubmitTask (TaskSubmitRequest) returns (stream TaskSubmitReply);
@@ -87,13 +91,13 @@ message TaskStateInfo {
 }
 
 message TaskSubmitRequest {
-  // Version of the protocol, e.g., 1.0, 1.1, 2.0, 2.1
-  float version = 1;
+  // Version of the protocol, e.g., 1,2,3
+  int32  version = 1;
   TaskInfo task = 2;
 }
 
 message TaskStreamSubmitRequest {
-  float version = 1;
+  int32  version = 1;
   oneof request {
     TaskInfo task = 2;
     DataObject input = 3;
@@ -101,35 +105,45 @@ message TaskStreamSubmitRequest {
 }
 
 message TaskSubmitReply {
-  float version = 1;
+  int32  version = 1;
   TaskStateInfo task = 2;
 }
 
 message TaskStateRequest {
-  float version = 1;
+  int32  version = 1;
   TaskStateInfo task = 2;
 }
 
 message TaskStateReply {
-  float version = 1;
+  int32  version = 1;
+}
+
+message TaskStopRequest {
+  int32  version = 1;
+  string task_id = 2;
+}
+
+message TaskStopReply {
+  int32  version = 1;
 }
 
 message WorkerInfo {
   string worker_id = 1;
   string address = 2;
-  uint32 total_memory = 3;
-  uint32 used_memory = 4;
-  uint32 total_cpu = 5;
-  uint32 used_cpu = 6;
+  string handler_address = 3;
+  uint32 total_memory = 4;
+  uint32 used_memory = 5;
+  uint32 total_cpu = 6;
+  uint32 used_cpu = 7;
 }
 
 message RegisterWorkerRequest {
-  float version = 1;
+  int32  version = 1;
    WorkerInfo worker = 2;
 }
 
 message RegisterWorkerReply {
-  float version = 1;
+  int32  version = 1;
   string status = 2;
 }
 

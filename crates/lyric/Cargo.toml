@@ -13,13 +13,15 @@ description = "A high-performance, flexible, multi-language code execution frame
 [dependencies]
 lyric-utils = { workspace = true }
 lyric-rpc = { workspace = true }
-
+lyric-wasm-runtime = { workspace = true }
 uuid =  { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "process"] }
 chrono = { workspace = true }
 tonic = {workspace = true, features = ["server"]}
 async-trait = { workspace = true }
 clap = { workspace = true }
+serde_json =  { workspace = true }
+rmp-serde = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["json"] }
@@ -31,6 +33,8 @@ bytes = { workspace = true }
 tokio-util = { workspace = true }
 tokio-stream = { workspace = true }
 lazy_static = "1.5.0"
+
+wrpc-transport = { version = "0.28", default-features = false, features = ["net"]}
 
 [dev-dependencies]
 tokio-test = "0.4.4"

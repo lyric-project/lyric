@@ -8,9 +8,11 @@ use crate::message::{NotifyMessage, PendingTask, RpcMessage, TaskStateResult};
 use crate::rpc::RPC_PROTOCOL_VERSION;
 use crate::task::TaskID;
 use crate::worker::{connect_to_worker, EnvWorkerInfo, WorkerID, WorkerStatus};
-use crate::{Config, TokioRuntime};
+use crate::{Config, ResultSender, TokioRuntime};
 use chrono::{Duration, Local};
-use lyric_rpc::task::{Language, RegisterWorkerRequest, TaskStateRequest, TaskSubmitRequest};
+use lyric_rpc::task::{
+    Language, RegisterWorkerRequest, TaskStateRequest, TaskStopRequest, TaskSubmitRequest,
+};
 use lyric_utils::err::TaskError;
 use lyric_utils::net_utils::listen_available_port;
 use lyric_utils::prelude::Error;
@@ -22,13 +24,21 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use tokio_stream::StreamExt;
 
 #[derive(Debug)]
+struct TaskHandle {
+    task_id: TaskID,
+    worker_id: WorkerID,
+    handle: tokio::task::JoinHandle<()>,
+}
+
+#[derive(Debug)]
 pub(crate) struct WorkerEnvManager {
     pub(crate) tx_core_notify: mpsc::UnboundedSender<NotifyMessage>,
     /// The worker IDs that are currently pending.
     pub(crate) pending_workers: HashMap<WorkerID, i64>,
     /// The worker handles.
     pub(crate) worker_handles: HashMap<WorkerID, Box<dyn ChildProcess>>,
-    pub(crate) task_handles: HashMap<TaskID, tokio::task::JoinHandle<()>>,
+    pub(crate) task_handles: HashMap<TaskID, TaskHandle>,
+    task_id_to_worker_id: HashMap<TaskID, WorkerID>,
     /// The worker information for each registered worker.
     pub(crate) registered_workers: HashMap<WorkerID, EnvWorkerInfo>,
     pub(crate) assigned_ports: Arc<StdMutex<HashSet<u16>>>,
@@ -48,6 +58,7 @@ impl WorkerEnvManager {
             pending_workers: HashMap::new(),
             worker_handles: HashMap::new(),
             task_handles: HashMap::new(),
+            task_id_to_worker_id: HashMap::new(),
             registered_workers: HashMap::new(),
             assigned_ports: Arc::new(StdMutex::new(HashSet::new())),
             config,
@@ -100,12 +111,12 @@ impl WorkerEnvManager {
 
     pub async fn handle_task_completed(&mut self, req: TaskStateRequest) {
         if let Some(task) = req.task {
-            let task_id = TaskID::new(task.task_id.as_str());
-            if let Some(handle) = self.task_handles.remove(&task_id) {
-                tokio::spawn(async move {
-                    let _ = handle.await;
-                });
-            }
+            // let task_id = TaskID::new(task.task_id.as_str());
+            // if let Some(handle) = self.task_handles.remove(&task_id) {
+            //     tokio::spawn(async move {
+            //         let _ = handle.handle.await;
+            //     });
+            // }
             let worker_id = WorkerID::from_full_id(&task.worker_id);
             if let Some(worker) = self.registered_workers.get_mut(&worker_id) {
                 worker.status = WorkerStatus::Idle;
@@ -113,6 +124,9 @@ impl WorkerEnvManager {
         }
     }
 
+    /// Assign a task to a worker.
+    ///
+    /// This method will run in driver side.
     pub async fn assign_task_to_worker(
         &mut self,
         mut pending_task: PendingTask,
@@ -232,10 +246,65 @@ impl WorkerEnvManager {
                 }
             });
 
-            self.task_handles.insert(task_id, handle);
+            let task_handle = TaskHandle {
+                task_id: task_id.clone(),
+                worker_id: pending_task.worker_id.clone(),
+                handle,
+            };
+            tracing::debug!("Task assigned: {:?}", task_id);
+            self.task_id_to_worker_id
+                .insert(task_id.clone(), pending_task.worker_id.clone());
+            self.task_handles.insert(task_id, task_handle);
         } else {
             pending_task.retry_times += 1;
             let _ = tx_notify.send(NotifyMessage::RetryScheduleTask { pending_task });
+        }
+    }
+
+    pub async fn stop_task(&mut self, task_id: TaskID, tx: ResultSender<(), Error>) {
+        match (
+            self.task_handles.remove(&task_id),
+            self.task_id_to_worker_id.remove(&task_id),
+        ) {
+            (Some(handle), Some(worker_id)) => {
+                if !handle.handle.is_finished() {
+                    handle.handle.abort();
+                }
+                if let Some(worker) = self.registered_workers.get_mut(&worker_id) {
+                    worker.status = WorkerStatus::Idle;
+                    let mut worker_client = worker.worker_client.clone();
+                    let req = TaskStopRequest {
+                        version: RPC_PROTOCOL_VERSION,
+                        task_id: task_id.as_str().to_string(),
+                    };
+                    tokio::task::spawn(async move {
+                        match worker_client.stop_task(req).await {
+                            Ok(_) => {
+                                tracing::debug!("Task stopped: {:?}", task_id);
+                                let _ = tx.send(Ok(()));
+                            }
+                            Err(e) => {
+                                tracing::warn!(
+                                    "Failed to stop task: {:?}, error: {:?}",
+                                    task_id,
+                                    e
+                                );
+                                let _ = tx.send(Err(Error::InternalError(format!("{:?}", e))));
+                            }
+                        }
+                    });
+                }
+            }
+            (Some(_), None) => {
+                tracing::warn!("Task {} is not assigned to any worker", task_id.as_str());
+                let _ = tx.send(Err(Error::InternalError(
+                    "Task is not assigned to any worker".into(),
+                )));
+            }
+            _ => {
+                tracing::warn!("Task {} is not running", task_id.as_str());
+                let _ = tx.send(Err(Error::InternalError("Task is not running".into())));
+            }
         }
     }
 
@@ -431,18 +500,18 @@ impl WorkerEnvManager {
     }
 
     pub async fn cleanup_completed_tasks(&mut self) {
-        let completed_tasks: Vec<TaskID> = self
-            .task_handles
-            .iter()
-            .filter(|(_, handle)| handle.is_finished())
-            .map(|(task_id, _)| task_id.clone())
-            .collect();
-
-        for task_id in completed_tasks {
-            if let Some(handle) = self.task_handles.remove(&task_id) {
-                let _ = handle.await;
-            }
-        }
+        // let completed_tasks: Vec<TaskID> = self
+        //     .task_handles
+        //     .iter()
+        //     .filter(|(_, handle)| handle.handle.is_finished())
+        //     .map(|(task_id, _)| task_id.clone())
+        //     .collect();
+        //
+        // for task_id in completed_tasks {
+        //     if let Some(handle) = self.task_handles.remove(&task_id) {
+        //         let _ = handle.handle.await;
+        //     }
+        // }
     }
 
     fn _check_and_remove_registered_worker(&mut self, worker_id: &WorkerID) -> Result<(), Error> {
@@ -483,8 +552,8 @@ impl WorkerEnvManager {
     pub(crate) async fn stop(&mut self) {
         tracing::info!("Stopped task handles");
         for (_, handle) in self.task_handles.drain() {
-            if !handle.is_finished() {
-                handle.abort();
+            if !handle.handle.is_finished() {
+                handle.handle.abort();
             }
         }
         tracing::info!(

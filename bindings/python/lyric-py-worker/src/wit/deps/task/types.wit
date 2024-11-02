@@ -1,0 +1,35 @@
+interface types {
+  /// A request to interpret a script
+  record interpreter-request {
+    /// The protocol version of the interpreter
+    protocol: u32,
+    /// The language of the script
+    lang: string,
+      /// The script to be interpreted
+    code: string
+  }
+
+  record interpreter-response {
+    /// The result of the interpretation
+    protocol: u32,
+    data: list<u8>
+  }
+
+  record interpreter-output-response {
+    /// The result of the interpretation
+    protocol: u32,
+    data: list<u8>,
+    /// The output data after execution
+    output: list<u8>
+  }
+
+  record binary-response {
+    protocol: u32,
+    data: list<u8>
+  }
+
+  record binary-request {
+    protocol: u32,
+    data: list<u8>
+  }
+}

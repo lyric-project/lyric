@@ -1,0 +1,5 @@
+interface msgpack {
+    serialize: func(data: list<u8>) -> result<list<u8>, string>;
+
+    deserialize: func(encoded: list<u8>) -> result<list<u8>, string>;
+}

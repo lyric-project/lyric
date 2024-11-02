@@ -1,0 +1,14 @@
+package lyric:host@0.2.0;
+
+world logging {
+  export wasi:logging/logging;
+  export lyric:serialization/msgpack@0.2.0;
+}
+
+world interpreter-task {
+    export lyric:task/interpreter-task@0.2.0;
+}
+
+world binary-task {
+    export lyric:task/binary-task@0.2.0;
+}

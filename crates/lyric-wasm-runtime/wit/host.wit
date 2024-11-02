@@ -1,0 +1,15 @@
+package lyric:host@0.2.0;
+
+world interfaces {
+  import wasi:logging/logging;
+  import lyric:serialization/msgpack@0.2.0;
+  import lyric:task/interpreter-task@0.2.0;
+  import lyric:task/binary-task@0.2.0;
+}
+
+world wrpc-interfaces {
+  // for RPC calls in the host
+  import lyric:task/interpreter-task@0.2.0;
+  import lyric:task/binary-task@0.2.0;
+}
+

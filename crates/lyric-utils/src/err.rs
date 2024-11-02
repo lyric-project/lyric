@@ -64,4 +64,7 @@ pub enum TaskError {
 
     #[error("TaskStreamStopped")]
     StreamStopped,
+
+    #[error("Data parse error: {0}")]
+    DataParseError(String),
 }
