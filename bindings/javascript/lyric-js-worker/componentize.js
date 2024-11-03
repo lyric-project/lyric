@@ -1,3 +1,13 @@
+/**
+ * This script is used to generate the wasm file for the worker.js file.
+ *
+ *
+ * Can't upgrade jco to 1.7.1 because of the following error:
+ *
+ * ```bash
+ * component imports instance `wasi:http/types@0.2.0`, but a matching implementation was not found in the linker
+ * ```
+ */
 import { componentize } from '@bytecodealliance/componentize-js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';

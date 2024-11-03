@@ -8,7 +8,7 @@ license = { workspace = true }
 repository = { workspace = true }
 keywords = ["ai", "llm", "agent"]
 readme = "../../README.md"
-description = "A high-performance, flexible, multi-language code execution framework for your AI apps."
+description = "A Rust-powered secure sandbox for multi-language code execution, leveraging WebAssembly to provide high-performance runtime isolation for AI applications"
 
 [dependencies]
 lyric-utils = { workspace = true }

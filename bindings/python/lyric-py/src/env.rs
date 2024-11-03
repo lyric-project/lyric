@@ -27,6 +27,7 @@ pub struct PyDockerEnvironmentConfig {
     pub custom_id: Option<String>,
     pub working_dir: Option<String>,
     pub mounts: Vec<(String, String)>,
+    pub envs: Option<HashMap<String, String>>,
 }
 
 #[pymethods]
@@ -83,18 +84,20 @@ impl PyLocalEnvironmentConfig {
 #[pymethods]
 impl PyDockerEnvironmentConfig {
     #[new]
-    #[pyo3(signature = (image, custom_id=None, working_dir=None, mounts=None))]
+    #[pyo3(signature = (image, custom_id=None, working_dir=None, mounts=None, envs=None))]
     fn new(
         image: String,
         custom_id: Option<String>,
         working_dir: Option<String>,
         mounts: Option<Vec<(String, String)>>,
+        envs: Option<HashMap<String, String>>,
     ) -> Self {
         PyDockerEnvironmentConfig {
             image,
             custom_id,
             working_dir,
             mounts: mounts.unwrap_or_default(),
+            envs,
         }
     }
 }
@@ -116,7 +119,7 @@ impl From<PyDockerEnvironmentConfig> for DockerEnvironmentConfig {
             image: config.image,
             working_dir: config.working_dir,
             mounts: config.mounts,
-            envs: None,
+            envs: config.envs,
         }
     }
 }
@@ -171,6 +174,10 @@ impl PyDockerEnvironmentConfig {
             working_dir.hash(&mut hasher);
         }
         for (key, val) in &self.mounts {
+            key.hash(&mut hasher);
+            val.hash(&mut hasher);
+        }
+        for (key, val) in self.envs.iter().flatten() {
             key.hash(&mut hasher);
             val.hash(&mut hasher);
         }

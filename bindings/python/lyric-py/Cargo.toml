@@ -7,7 +7,7 @@ homepage = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
 readme = "../../../README.md"
-description = "Python bindings for Lyric: a high-performance, flexible, multi-language code execution framework for your AI apps."
+description = "Python bindings for Lyric: A Rust-powered secure sandbox for multi-language code execution, leveraging WebAssembly to provide high-performance runtime isolation for AI applications"
 
 include = [
     "/pyproject.toml",

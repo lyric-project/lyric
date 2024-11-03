@@ -1,3 +1,3 @@
 # lyric-task
 
-Describe your project here.
+Base lyric task utilities for lyric python workers.

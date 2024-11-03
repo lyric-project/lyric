@@ -9,7 +9,7 @@ dependencies = [
     "lyric-task",
 ]
 readme = "README.md"
-requires-python = ">= 3.10"
+requires-python = ">= 3.8"
 
 [build-system]
 requires = [
