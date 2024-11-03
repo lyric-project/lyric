@@ -6,6 +6,8 @@
 name: Release Python
 
 on:
+  release:
+    types: [published]
   push:
     branches:
       - main

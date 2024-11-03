@@ -288,7 +288,7 @@ impl Lyric {
             env,
         }) {
             Err(e) => {
-                tracing::error!("core_call fatal error");
+                // tracing::error!("core_call fatal error");
                 return Err(Error::InternalError(
                     format!("Failed to send message to core: {}", e).to_string(),
                 ));
@@ -347,7 +347,7 @@ impl Lyric {
     ) -> Result<T, Error> {
         match self.inner.tx_to_core.send(msg) {
             Err(e) => {
-                tracing::error!("core_call fatal error");
+                // tracing::error!("core_call fatal error");
                 return Err(Error::InternalError(
                     format!("Failed to send message to core: {}", e).to_string(),
                 ));
@@ -357,7 +357,7 @@ impl Lyric {
         match res_rx.await {
             Ok(r) => r.map_err(|e| Error::APIError(e.into())),
             Err(e) => {
-                tracing::error!("core_call fatal error");
+                // tracing::error!("core_call fatal error");
                 Err(Error::InternalError(
                     format!("Failed to receive response from core: {}", e).to_string(),
                 ))
