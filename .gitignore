@@ -40,3 +40,4 @@ target/
 *.tbl
 
 logs/
+!examples/notebook/*.ipynb

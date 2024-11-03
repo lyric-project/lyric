@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use std::env;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::RwLock;
 use tracing::{Event, Subscriber};
 use tracing_appender::non_blocking::NonBlocking;
@@ -16,6 +17,7 @@ use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 lazy_static! {
     static ref GLOBAL_TARGET: RwLock<String> = RwLock::new(String::new());
+    static ref SUBSCRIBER_INITIALIZED: AtomicBool = AtomicBool::new(false);
 }
 
 pub fn read_target() -> String {
@@ -30,6 +32,11 @@ pub fn set_target(target: String) -> String {
 }
 
 pub fn init_tracing_subscriber<T: Into<String>, E: AsRef<str>>(target: T, default_level: E) {
+    // If the subscriber has been initialized, return directly
+    if SUBSCRIBER_INITIALIZED.load(Ordering::SeqCst) {
+        return;
+    }
+
     set_target(target.into());
     let env_filter = EnvFilter::try_from_env("LYRIC_CORE_LOG_LEVEL")
         .or(EnvFilter::try_from_env("RUST_LOG"))
@@ -76,22 +83,6 @@ pub fn init_tracing_subscriber<T: Into<String>, E: AsRef<str>>(target: T, defaul
         let trace_appender = RollingFileAppender::new(Rotation::DAILY, log_dir, "trace.log");
         let (trace_non_blocking, _trace_guard) = NonBlocking::new(trace_appender);
 
-        // Add trace layer in text format
-        // let trace_layer = fmt::layer()
-        //     .with_writer(trace_non_blocking)
-        //     .event_format(
-        //         fmt::format()
-        //             .with_level(true)
-        //             .with_target(true)
-        //             .with_ansi(false)
-        //             .with_thread_names(true)
-        //             .with_timer(ChronoLocal::rfc_3339())
-        //             .compact()
-        //     )
-        //     .with_ansi(false)
-        //     .with_span_events(FmtSpan::CLOSE)
-        //     .with_filter(filter_fn(|metadata| metadata.is_span()));
-
         // Add trace layer in JSON format
         let trace_layer = fmt::layer()
             .json()
@@ -107,7 +98,7 @@ pub fn init_tracing_subscriber<T: Into<String>, E: AsRef<str>>(target: T, defaul
                     .with_level(true)
                     .with_target(true)
                     .with_thread_names(true)
-                    .with_timer(ChronoLocal::rfc_3339()), // EventFormatter::new()
+                    .with_timer(ChronoLocal::rfc_3339()),
             )
             .with_filter(filter_fn(|metadata| metadata.is_span()));
 
@@ -123,6 +114,9 @@ pub fn init_tracing_subscriber<T: Into<String>, E: AsRef<str>>(target: T, defaul
         .with(env_filter)
         .with(layers)
         .init();
+
+    // Set the subscriber initialization flag
+    SUBSCRIBER_INITIALIZED.store(true, Ordering::SeqCst);
 }
 
 pub struct EventFormatter {

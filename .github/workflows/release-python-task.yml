@@ -7,8 +7,6 @@ on:
     branches:
       - main
       - master
-    tags:
-      - '*'
   pull_request:
   workflow_dispatch:
 
@@ -26,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '21'
           cache: 'npm'
           cache-dependency-path: bindings/javascript/lyric-js-worker/package-lock.json
 
@@ -111,9 +109,11 @@ jobs:
           pip install --force-reinstall ../dist/lyric_task-*.whl
           
           cd src
-          componentize-py -d ./wit -w lyric-py-task componentize worker -o python_worker_fat.wasm
-          wasm-tools print python_worker_fat.wasm | wasm-tools strip -a -o lyric_py_worker/python_worker.wasm
-          rm python_worker_fat.wasm
+          # wasm-tools Can't strip fat wasm files in github actions
+          # componentize-py -d ./wit -w lyric-py-task componentize worker -o python_worker_fat.wasm
+          # wasm-tools print python_worker_fat.wasm | wasm-tools strip -a -o lyric_py_worker/python_worker.wasm
+          # rm python_worker_fat.wasm
+          componentize-py -d ./wit -w lyric-py-task componentize worker -o lyric_py_worker/python_worker.wasm
           cd ..
           
           rye sync --no-dev
@@ -210,13 +210,15 @@ jobs:
     needs: [test-packages]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
-    environment:
-      name: pypi
-      url: https://pypi.org/p/lyric-js-worker
     permissions:
       id-token: write
 
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
       - name: Download all wheels
         uses: actions/download-artifact@v4
         with:
@@ -232,14 +234,35 @@ jobs:
 
       - name: Prepare dist directory
         run: |
-          mkdir dist
+          mkdir -p dist
           cp dist-wheels/* dist/
           cp dist-sdist/* dist/
+          ls -la dist/
 
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist
-          verbose: true
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Install and verify with twine
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade twine
+          echo "Checking wheel contents:"
+          unzip -l dist/*.whl | grep wasm || true
+          echo "Running twine check:"
+          twine check dist/*
+
+      - name: Verify distributions
+        run: |
+          echo "Checking wheel contents:"
+          unzip -l dist/*.whl | grep wasm || true
+          echo "Running twine check:"
+          twine check dist/*
+
+      - name: Upload to PyPI
+        #  pypa/gh-action-pypi-publish@release/v1 not working(zipfile.BadZipFile: Bad CRC-32 for file 'lyric_py_worker/python_worker.wasm')
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+        run: |
+          python -m twine upload \
+            --verbose \
+            --disable-progress-bar \
+            dist/*

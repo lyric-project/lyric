@@ -11,6 +11,7 @@ use config::{PyConfig, PyDriverConfig, PyWorkerConfig};
 use env::{PyDockerEnvironmentConfig, PyEnvironmentConfig, PyLocalEnvironmentConfig};
 use lyric::PyLyric;
 use pyo3::prelude::*;
+use std::sync::OnceLock;
 use task::{
     PyDataObject, PyExecutionUnit, PyStreamDataObjectIter, PyTaskInfo, PyTaskOutputObject,
     PyTaskStateInfo,
@@ -18,8 +19,18 @@ use task::{
 use types::from_python_iterator;
 
 /// A Python module implemented in Rust.
+
+pub fn get_lyric_version() -> &'static str {
+    static LYRIC_VERSION: OnceLock<String> = OnceLock::new();
+
+    LYRIC_VERSION.get_or_init(|| {
+        let version = env!("CARGO_PKG_VERSION");
+        version.replace("-alpha", "a").replace("-beta", "b")
+    })
+}
 #[pymodule]
 fn _py_lyric(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add("__version__", get_lyric_version())?;
     m.add_class::<PyLyric>().unwrap();
     m.add_class::<PyTaskInfo>().unwrap();
     m.add_class::<PyDataObject>().unwrap();

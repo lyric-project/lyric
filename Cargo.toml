@@ -9,7 +9,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "0.1.1"
+version = "0.1.2"
 authors = ["fangyinc <staneyffer@gmail.com>"]
 edition = "2021"
 homepage = "https://github.com/fangyinc/lyric"
@@ -41,10 +41,11 @@ futures = "0.3.30"
 bytes = "1.7.1"
 tokio-util = { version = "0.7.12", features = ["io"] }
 tokio-stream = { version = "0.1.16", features = ["io-util"] }
-pyo3 = { version = "0.22.2" }
+pyo3 = { version = "0.22.5" }
+python3-dll-a = "0.2.10"
 
-lyric = { version = "0.1.1", path = "crates/lyric", default-features = false }
-lyric-utils = { version = "0.1.1", path = "crates/lyric-utils", default-features = false }
-lyric-rpc = { version = "0.1.1", path = "crates/lyric-rpc", default-features = false }
-lyric-wasm-runtime = { version = "0.1.1", path = "crates/lyric-wasm-runtime", default-features = false }
-lyric-py = { version = "0.1.1", path = "bindings/python/lyric-py", default-features = false }
+lyric = { version = "0.1.2", path = "crates/lyric", default-features = false }
+lyric-utils = { version = "0.1.2", path = "crates/lyric-utils", default-features = false }
+lyric-rpc = { version = "0.1.2", path = "crates/lyric-rpc", default-features = false }
+lyric-wasm-runtime = { version = "0.1.2", path = "crates/lyric-wasm-runtime", default-features = false }
+lyric-py = { version = "0.1.2", path = "bindings/python/lyric-py", default-features = false }
