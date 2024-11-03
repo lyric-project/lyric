@@ -67,15 +67,6 @@ print(js_res)
 lcd.stop()
 ```
 
-## 📚 Documentation
-
-Visit our [full documentation](https://github.com/your-username/lyric/docs) for more information:
-
-- Detailed Installation Guide
-- API Reference
-- Best Practices
-- Example Code
-
 ## 🔧 Requirements
 
 - Python >= 3.8
