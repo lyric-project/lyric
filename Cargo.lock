@@ -1478,7 +1478,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "lyric"
-version = "0.1.1"
+version = "0.1.2-rc0"
 dependencies = [
  "async-trait",
  "bollard",
@@ -1507,7 +1507,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-py"
-version = "0.1.1"
+version = "0.1.2-rc0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1520,6 +1520,7 @@ dependencies = [
  "lyric-utils",
  "lyric-wasm-runtime",
  "pyo3",
+ "python3-dll-a",
  "rmp-serde",
  "serde",
  "tokio",
@@ -1532,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-rpc"
-version = "0.1.1"
+version = "0.1.2-rc0"
 dependencies = [
  "async-trait",
  "lyric-utils",
@@ -1545,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-utils"
-version = "0.1.1"
+version = "0.1.2-rc0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1561,7 +1562,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-wasm-runtime"
-version = "0.1.1"
+version = "0.1.2-rc0"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -1962,6 +1963,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc38c5feeb496c8321091edf3d63e9a6829eab4b863b4a6a65f26f3e9cc6b179"
 dependencies = [
  "once_cell",
+ "python3-dll-a",
  "target-lexicon",
 ]
 
@@ -1998,6 +2000,15 @@ dependencies = [
  "pyo3-build-config",
  "quote",
  "syn 2.0.77",
+]
+
+[[package]]
+name = "python3-dll-a"
+version = "0.2.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd0b78171a90d808b319acfad166c4790d9e9759bbc14ac8273fe133673dd41b"
+dependencies = [
+ "cc",
 ]
 
 [[package]]

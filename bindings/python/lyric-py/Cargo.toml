@@ -29,7 +29,7 @@ include = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html[lib]
 [lib]
 name = "lyric"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 lyric-rpc = { workspace = true }
@@ -38,7 +38,8 @@ lyric = { workspace = true }
 lyric-wasm-runtime = { workspace = true }
 
 tokio = { workspace = true }
-pyo3 = { workspace = true, features = ["extension-module", "experimental-async"] }
+pyo3 = { workspace = true, features = ["extension-module", "experimental-async", "generate-import-lib"] }
+python3-dll-a = { workspace = true }
 rmp-serde = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
