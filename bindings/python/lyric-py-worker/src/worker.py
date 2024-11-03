@@ -1,3 +1,13 @@
+"""Python Worker Implementation Using WASI.
+
+Import packages:
+https://github.com/bytecodealliance/componentize-py/issues/91
+
+Reduce the size of the generated wasm file:
+wasm-tools strip -a
+wasm-tools print python_task.wasm | wasm-tools strip -a -o python_task_stripped.wasm
+"""
+
 import sys
 import json
 import asyncio
@@ -18,20 +28,6 @@ from lyric_task.std import *
 from lyric_py_task import exports, imports
 from lyric_py_task.imports import msgpack
 
-
-count = 0
-
-"""
-Import packages:
-https://github.com/bytecodealliance/componentize-py/issues/91
-
-
-Reduce the size of the generated wasm file:
-wasm-tools strip -a
-wasm-tools print python_task.wasm | wasm-tools strip -a -o python_task_stripped.wasm
-"""
-
-
 class InterpreterTask(exports.InterpreterTask):
     def run(
         self, script: exports.types.InterpreterRequest
@@ -39,21 +35,25 @@ class InterpreterTask(exports.InterpreterTask):
         """
         Raises: `interpreter_task.types.Err(interpreter_task.imports.str)`
         """
-        global count
         print(f"[Python-InterpreterTask] script: {script}")
-        print("[Python-InterpreterTask] count:", count)
-        count += 1
+        success = False
         with IOCapture() as capture:
-            exec(script.code)
+            try:
+                exec(script.code)
+                success = True
+            except Exception as e:
+                print(f"[Python-InterpreterTask] Exception: {e}")
+                success = False
             stdout, stderr = capture.get_output()
 
         result_dict = {
             "lang": "Python",
             "protocol": 1,
             "content": "Execute script successfully",
+            "success": success,
+            "exit_code": 0 if success else 1,
             "stdout": stdout,
             "stderr": stderr,
-            "success": True,
         }
         serialized = msgpack.serialize(
             json.dumps(result_dict, ensure_ascii=False).encode("utf-8")
@@ -68,22 +68,22 @@ class InterpreterTask(exports.InterpreterTask):
         print(f"[Python-InterpreterTask] script: {request}")
         print(f"[Python-InterpreterTask] call_name: {call_name}")
 
-        # 执行用户脚本
+        # Execute the user script
         exec_globals = {}
         exec(request.code, exec_globals)
 
-        # 检查call_name是否在执行后的全局变量中
+        # Check if the function is defined in the script
         if call_name not in exec_globals:
-            raise ValueError(f"函数 {call_name} 未在脚本中定义")
+            raise ValueError(f"Function {call_name} is not defined in the script")
 
-        # 获取call_name对应的函数
+        # Get the target function
         target_function = exec_globals[call_name]
 
-        # 解码输入
+        # Deserialize the input
         input_json = msgpack.deserialize(input).decode("utf-8")
         input_dict = json.loads(input_json)
 
-        # 执行函数并捕获输出
+        # Execute the function and capture the output
         with IOCapture() as capture:
             try:
                 output = target_function(input_dict)
@@ -101,6 +101,7 @@ class InterpreterTask(exports.InterpreterTask):
             "protocol": 1,
             "content": "Execute script successfully",
             "success": success,
+            "exit_code": 0 if success else 1,
             "stdout": stdout,
             "stderr": stderr,
         }
@@ -143,7 +144,7 @@ def loads(data):
 
 
 def dumps(data):
-    from my_py_lyric.pickle import dumps
+    from lyric_task.pickle import dumps
 
     # return pickle.dumps(data)
     return dumps(data)

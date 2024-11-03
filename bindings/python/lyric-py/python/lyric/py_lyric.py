@@ -40,13 +40,13 @@ def _gen_task_id() -> str:
 
 
 class Lyric:
-    def __init__(self, pl: PyLyric):
+    def __init__(self, pl: PyLyric, default_local_env: Optional[PyLocalEnvironmentConfig] = None):
         from lyric import BASE_LYRIC_DIR
 
         self._pl = pl
         self._hm = HandleManager(pl)
-        self._default_local_env = PyLocalEnvironmentConfig(
-            envs={"LYRIC_CORE_LOG_ANSICOLOR": "false"}
+        self._default_local_env = default_local_env or PyLocalEnvironmentConfig(
+            envs={"LYRIC_CORE_LOG_ANSICOLOR": "false", "LYRIC_CORE_LOG_LEVEL": "ERROR"}
         )
         self._default_docker_env = PyDockerEnvironmentConfig(
             image="py-lyric-base-alpine:latest", mounts=[(BASE_LYRIC_DIR, "/app")]
@@ -56,7 +56,7 @@ class Lyric:
         self._pl.start_driver(PyDriverConfig())
 
     async def load_workers(self, languages: List[LanguageType] = None):
-        languages = languages or [Language.PYTHON, Language.JAVA_SCRIPT]
+        languages = languages or [Language.PYTHON, Language.JAVASCRIPT]
         languages = [Language.parse(lang) for lang in languages]
         if Language.PYTHON in languages:
             await self._hm.get_handler(
@@ -65,11 +65,11 @@ class Lyric:
                 self._default_env(Language.PYTHON),
                 ignore_load_error=True,
             )
-        if Language.JAVA_SCRIPT in languages:
+        if Language.JAVASCRIPT in languages:
             await self._hm.get_handler(
-                Language.JAVA_SCRIPT,
+                Language.JAVASCRIPT,
                 _load_javascript_worker,
-                self._default_env(Language.JAVA_SCRIPT),
+                self._default_env(Language.JAVASCRIPT),
                 ignore_load_error=True,
             )
 
@@ -79,7 +79,7 @@ class Lyric:
             return PyEnvironmentConfig(local=self._default_local_env).clone_new(
                 "python_worker"
             )
-        elif language == Language.JAVA_SCRIPT:
+        elif language == Language.JAVASCRIPT:
             return PyEnvironmentConfig(local=self._default_local_env).clone_new(
                 "javascript_worker"
             )

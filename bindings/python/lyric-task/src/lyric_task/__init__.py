@@ -98,7 +98,7 @@ class BaseEnum(Enum):
 
 class Language(BaseEnum):
     PYTHON = 0
-    JAVA_SCRIPT = 1
+    JAVASCRIPT = 1
     SHELL = 2
     RUST = 3
 

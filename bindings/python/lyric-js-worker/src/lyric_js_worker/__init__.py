@@ -7,4 +7,4 @@ def get_wasm_path():
 
 class JavaScriptWasmTaskSpec(WasmTaskSpec):
     def __init__(self):
-        super().__init__(str(get_wasm_path()), Language.JAVA_SCRIPT)
+        super().__init__(str(get_wasm_path()), Language.JAVASCRIPT)

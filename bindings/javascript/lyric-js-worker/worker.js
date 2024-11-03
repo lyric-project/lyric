@@ -8,6 +8,8 @@ const interpreterTask = {
         let stdout = [];
         let stderr = [];
         let evalResult;
+        let success = true;
+        let exit_code = 0;
 
         // Save the original console.log and console.error
         const originalLog = console.log;
@@ -30,6 +32,8 @@ const interpreterTask = {
             console.log("After run code in interpreter Task");
         } catch (error) {
             console.error("Error occurred:", error.message);
+            success = false;
+            exit_code = 1;
         } finally {
             // Restore the original console.log and console.error
             console.log = originalLog;
@@ -42,6 +46,8 @@ const interpreterTask = {
             "content": "Execute script successfully",
             "stdout": stdout.join('\n'),
             "stderr": stderr.join('\n'),
+            "success": success,
+            "exit_code": exit_code,
             "evalResult": evalResult // Return the result of the eval
         }
 
@@ -70,6 +76,7 @@ const interpreterTask = {
         let stderr = [];
         let result;
         let success = true;
+        let exit_code = 0;
 
         // Save the original console.log and console.error
         const originalLog = console.log;
@@ -122,6 +129,7 @@ const interpreterTask = {
                 "error": error.message
             }
             success = false;
+            exit_code = 1;
         } finally {
             // Restore the original console.log and console.error
             console.log = originalLog;
@@ -133,6 +141,8 @@ const interpreterTask = {
             "lang": "javascript",
             "protocol": 1,
             "content": "Execute script successfully",
+            "success": success,
+            "exit_code": exit_code,
             "stdout": stdout.join('\n'),
             "stderr": stderr.join('\n'),
         }

@@ -4,7 +4,7 @@ package task;
 /// Language of the code
 enum Language {
   PYTHON = 0;
-  JAVA_SCRIPT = 1;
+  JAVASCRIPT = 1;
   SHELL = 2;
   RUST = 3;
 }
