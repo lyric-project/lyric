@@ -109,9 +109,11 @@ jobs:
           pip install --force-reinstall ../dist/lyric_task-*.whl
           
           cd src
-          componentize-py -d ./wit -w lyric-py-task componentize worker -o python_worker_fat.wasm
-          wasm-tools print python_worker_fat.wasm | wasm-tools strip -a -o lyric_py_worker/python_worker.wasm
-          rm python_worker_fat.wasm
+          # wasm-tools Can't strip fat wasm files in github actions
+          # componentize-py -d ./wit -w lyric-py-task componentize worker -o python_worker_fat.wasm
+          # wasm-tools print python_worker_fat.wasm | wasm-tools strip -a -o lyric_py_worker/python_worker.wasm
+          # rm python_worker_fat.wasm
+          componentize-py -d ./wit -w lyric-py-task componentize worker -o lyric_py_worker/python_worker.wasm
           cd ..
           
           rye sync --no-dev
