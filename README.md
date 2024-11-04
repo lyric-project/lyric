@@ -10,6 +10,10 @@ A Rust-powered secure sandbox for multi-language code execution, leveraging WebA
 - 🔌 **Easy Integration**: Clean Python bindings for seamless integration with existing projects
 - 🎯 **AI-Optimized**: Runtime environment specifically optimized for AI applications
 
+## 🔧 Requirements
+
+- Python >= 3.8
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -129,9 +133,10 @@ function message_handler(message_dict) {
 asyncio.run(main())
 ```
 
-## 🔧 Requirements
+## Examples
 
-- Python >= 3.8
+- [Notebook-Qick Start](examples/notebook/lyric_quick_start.ipynb): A Jupyter notebook demonstrating how to use Lyric to execute Python and JavaScript code.
+- [Notebook-Sandbox Execution](examples/notebook/lyric_sandbox_verification.ipynb): A Jupyter notebook demonstrating how to use Lyric to execute Python and JavaScript code in a sandboxed environment.
 
 ## 🤝 Contributing
 
