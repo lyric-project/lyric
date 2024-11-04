@@ -23,6 +23,9 @@ publish:
 	cargo publish --allow-dirty --registry crates-io -p lyric-rpc
 	sleep 20
 
+	cargo publish --allow-dirty --registry crates-io -p lyric-wasm-runtime
+	sleep 20
+
 	cargo publish --allow-dirty --registry crates-io -p lyric
 	sleep 20
 
@@ -31,6 +34,9 @@ publish-dry-run:
 	sleep 20
 
 	cargo publish --dry-run --allow-dirty --registry crates-io -p lyric-rpc
+	sleep 20
+
+	cargo publish --dry-run --allow-dirty --registry crates-io -p lyric-wasm-runtime
 	sleep 20
 
 	cargo publish --dry-run --allow-dirty --registry crates-io -p lyric
