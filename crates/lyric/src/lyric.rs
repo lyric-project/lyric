@@ -12,8 +12,11 @@ use lyric_wasm_runtime::WasmRuntime;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::future::Future;
+use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::net::TcpListener;
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tracing;
 use uuid::Uuid;
@@ -122,11 +125,20 @@ impl Lyric {
 
         let tx_to_core = self.inner.tx_to_core.clone();
 
+        tracing::info!("Starting driver server on {}", addr);
+        let socket_addr = addr
+            .parse()
+            .map_err(|e| Error::InternalError(format!("Failed to parse address: {}", e)))?;
+
+        self.inner.runtime.runtime.block_on(async {
+            check_address_availability(&addr, Duration::from_secs(5), 3, Duration::from_secs(1))
+                .await
+                .map_err(|e| Error::InternalError(format!("Address check failed: {}", e)))
+        })?;
+        tracing::info!("Server listening on {}", addr);
+
         self.inner.runtime.runtime.spawn(async move {
-            tracing::info!("Starting driver server on {}", addr);
             let driver_service = DriverService::new(tx_to_core);
-            let socket_addr = addr.parse().unwrap();
-            tracing::info!("Server listening on {}", addr);
             let _ = Server::builder()
                 .add_service(DriverRpcServer::new(driver_service))
                 .serve_with_shutdown(socket_addr, async {
@@ -157,12 +169,21 @@ impl Lyric {
 
         let inner = self.inner.clone();
 
+        let socket_addr = addr
+            .parse()
+            .map_err(|e| Error::InternalError(format!("Failed to parse address: {}", e)))?;
+
+        self.inner.runtime.runtime.block_on(async {
+            check_address_availability(&addr, Duration::from_secs(5), 3, Duration::from_secs(1))
+                .await
+                .map_err(|e| Error::InternalError(format!("Address check failed: {}", e)))
+        })?;
+
+        tracing::info!("LyricServer {} listening on {}", worker_id, addr);
+        tracing::info!("Connect to driver: {}", driver_addr);
+
         self.inner.runtime.runtime.spawn(async move {
-            tracing::info!("Starting worker server on {}", addr);
             let worker_service = WorkerService::new(tx_to_core, pg);
-            let socket_addr = addr.parse().unwrap();
-            tracing::info!("LyricServer {} listening on {}", worker_id, addr);
-            tracing::info!("Connect to driver: {}", driver_addr);
 
             let (tx_server, rx_server) = oneshot::channel();
             // Start wasm runtime
@@ -377,5 +398,55 @@ impl Lyric {
         drop(wasm_rt);
         let res = f(rt).await;
         res
+    }
+}
+
+pub(crate) async fn check_address_availability(
+    addr: &str,
+    timeout: Duration,
+    retry_times: usize,
+    retry_interval: Duration,
+) -> Result<(), Error> {
+    let socket_addr: SocketAddr = addr
+        .parse()
+        .map_err(|e| Error::InternalError(format!("Failed to parse address {}: {}", addr, e)))?;
+    let mut current_try = 0;
+    loop {
+        tracing::info!(
+            "Checking address availability: {} (attempt {}/{})",
+            addr,
+            current_try + 1,
+            retry_times
+        );
+
+        match tokio::time::timeout(timeout, TcpListener::bind(&socket_addr)).await {
+            Ok(result) => match result {
+                Ok(_) => {
+                    tracing::info!("Address {} is available", addr);
+                    return Ok(());
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to bind to {}: {}", addr, e);
+                }
+            },
+            Err(_) => {
+                tracing::warn!("Timeout while checking address: {}", addr);
+                return Err(Error::InternalError(format!(
+                    "Timeout while checking address: {}",
+                    addr
+                )));
+            }
+        }
+
+        current_try += 1;
+        if current_try >= retry_times {
+            return Err(Error::InternalError(format!(
+                "Failed to bind to address: {}",
+                addr
+            )));
+        }
+
+        tracing::info!("Retrying in {} seconds...", retry_interval.as_secs());
+        tokio::time::sleep(retry_interval).await;
     }
 }

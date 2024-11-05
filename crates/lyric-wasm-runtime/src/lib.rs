@@ -2,6 +2,7 @@ pub mod capability;
 mod component;
 pub mod error;
 mod host;
+pub mod resource;
 mod tcp;
 mod utils;
 

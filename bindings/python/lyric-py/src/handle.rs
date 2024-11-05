@@ -3,6 +3,7 @@ use futures::TryFutureExt;
 use std::future::Future;
 use std::sync::Arc;
 // use pyo3::{pyclass, pymethods, PyErr, PyObject, PyRef, PyRefMut, PyResult};
+use crate::resource::PyTaskResourceConfig;
 use crate::task::{PyDataObject, PyTaskStateInfo};
 use lyric::task_ext::{ClientType, MsgpackDeserializeExt, MsgpackSerializeExt, TaskHandle};
 use lyric::{Lyric, TaskDescription, TokioRuntime};
@@ -41,8 +42,12 @@ pub struct PyTaskHandle {
 
 #[pymethods]
 impl PyTaskHandle {
-    #[pyo3(name = "run", signature = (args))]
-    async fn run(&self, args: PyTaskCallArgs) -> PyResult<PyDataObject> {
+    #[pyo3(name = "run", signature = (args, resources = None))]
+    async fn run(
+        &self,
+        args: PyTaskCallArgs,
+        resources: Option<PyTaskResourceConfig>,
+    ) -> PyResult<PyDataObject> {
         use lyric_wasm_runtime::capability::wrpc::lyric::task::{binary_task, types};
         let req_data = args
             .data
@@ -50,6 +55,7 @@ impl PyTaskHandle {
                 "data is required",
             ))?;
         let req = types::BinaryRequest {
+            resources: resources.map(|r| r.into_rpc()),
             protocol: 1_u32,
             data: req_data.data.into(),
         };
@@ -79,10 +85,17 @@ impl PyTaskHandle {
         Ok(PyDataObject::from(response_data))
     }
 
-    #[pyo3(name = "exec", signature = (lang, code, decode = true))]
-    async fn exec(&self, lang: String, code: String, decode: bool) -> PyResult<PyDataObject> {
+    #[pyo3(name = "exec", signature = (lang, code, decode = true, resources = None))]
+    async fn exec(
+        &self,
+        lang: String,
+        code: String,
+        decode: bool,
+        resources: Option<PyTaskResourceConfig>,
+    ) -> PyResult<PyDataObject> {
         use lyric_wasm_runtime::capability::wrpc::lyric::task::{interpreter_task, types};
         let req = types::InterpreterRequest {
+            resources: resources.map(|r| r.into_rpc()),
             protocol: 1_u32,
             lang,
             code,
@@ -108,7 +121,7 @@ impl PyTaskHandle {
         .await
     }
 
-    #[pyo3(name = "exec1", signature = (lang, code, call_name, input, encode, decode = true))]
+    #[pyo3(name = "exec1", signature = (lang, code, call_name, input, encode, decode = true, resources = None))]
     async fn exec1(
         &self,
         lang: String,
@@ -117,9 +130,11 @@ impl PyTaskHandle {
         input: Vec<u8>,
         encode: bool,
         decode: bool,
+        resources: Option<PyTaskResourceConfig>,
     ) -> PyResult<Vec<PyDataObject>> {
         use lyric_wasm_runtime::capability::wrpc::lyric::task::{interpreter_task, types};
         let req = types::InterpreterRequest {
+            resources: resources.map(|r| r.into_rpc()),
             protocol: 1_u32,
             lang,
             code,

@@ -1,11 +1,92 @@
 interface types {
+
+  /// CPU Resource Configuration
+  record cpu-config {
+    /// CPU core limit (e.g. 1.0 represents a full core, 0.5 represents half a core)
+    cpu-cores: option<f32>,
+    /// CPU share value (similar to --cpu-shares in docker, default 1024)
+    cpu-shares: option<u32>,
+    /// CPU period configuration (microseconds, at most use quota microseconds within period)
+    cpu-quota: option<u32>,
+    /// CPU period time (microseconds, default 100000, i.e. 100ms)
+    cpu-period: option<u32>
+  }
+
+  /// Memory Resource Configuration
+  record memory-config {
+    /// Memory limit in bytes
+    memory-limit: option<u64>
+  }
+
+  /// Network Resource Configuration
+  record network-config {
+    /// Whether to enable network access
+    enable-network: bool,
+    /// Inbound bandwidth limit (KB/s)
+    ingress-limit-kbps: option<u32>,
+    /// Outbound bandwidth limit (KB/s)
+    egress-limit-kbps: option<u32>,
+    /// Allowed host list
+    allowed-hosts: option<list<string>>,
+    /// Allowed port range list (start_port, end_port)
+    allowed-ports: option<list<tuple<u16, u16>>>
+  }
+
+  /// File system permission
+  flags file-perms {
+    /// Read permission
+    read,
+    /// Write permission
+    write,
+  }
+
+  /// File system configuration
+  record fs-config {
+    /// Pre-mapped directory list (host path, container path, directory permissions, file permissions)
+    preopens: list<tuple<string, string, file-perms, file-perms>>,
+    /// File system size limit in bytes
+    fs-size-limit: option<u64>,
+    /// Temporary directory for wasi
+    temp-dir: option<string>
+  }
+
+  /// Instance limits
+  record instance-limits {
+    // Max number of instances
+    max-instances: option<u32>,
+    /// Max number of tables
+    max-tables: option<u32>,
+    /// Max number of elements in each table
+    max-table-elements: option<u32>
+  }
+
+  /// Full resource configuration
+  record resource-config {
+    /// CPU configuration
+    cpu: option<cpu-config>,
+    /// Memory configuration
+    memory: option<memory-config>,
+    /// Network configuration
+    network: option<network-config>,
+    /// File system configuration
+    fs: option<fs-config>,
+    // Instance limits
+    instance: option<instance-limits>,
+    /// Task timeout in milliseconds
+    timeout-ms: option<u32>,
+    /// List of environment variables
+    env-vars: list<tuple<string, string>>
+  }
+
   /// A request to interpret a script
   record interpreter-request {
+    /// Resource configuration
+    resources: option<resource-config>,
     /// The protocol version of the interpreter
     protocol: u32,
     /// The language of the script
     lang: string,
-      /// The script to be interpreted
+    /// The script to be interpreted
     code: string
   }
 
@@ -29,6 +110,8 @@ interface types {
   }
 
   record binary-request {
+    /// Resource configuration
+    resources: option<resource-config>,
     protocol: u32,
     data: list<u8>
   }

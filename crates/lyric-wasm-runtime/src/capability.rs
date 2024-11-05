@@ -7,9 +7,6 @@ mod wasmtime_bindings {
         async: true,
         tracing: true,
         trappable_imports: true,
-        // with: {
-        //    "wasi:io": wasmtime_wasi::bindings::io,
-        // },
     });
 }
 
@@ -22,7 +19,7 @@ pub mod wrpc {
         generate_all,
     });
 }
-
 pub use wasmtime_bindings::lyric::{serialization, task};
 pub use wasmtime_bindings::wasi::logging;
 pub use wasmtime_bindings::Interfaces;
+pub use wrpc::lyric::task as rpc_task;

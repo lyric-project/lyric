@@ -17,6 +17,7 @@ from ._py_lyric import (
     PyLocalEnvironmentConfig,
     PyLyric,
     PyTaskHandle,
+    PyTaskResourceConfig,
 )
 
 logger = logging.getLogger(__name__)
@@ -323,6 +324,7 @@ class Lyric:
         worker_name: Optional[str] = None,
         decode: bool = True,
         exec_env: Optional[EXEC_ENV] = None,
+        resources: Optional[PyTaskResourceConfig] = None,
     ) -> Union[Dict[str, Any], bytes]:
         """Execute code
 
@@ -332,11 +334,12 @@ class Lyric:
             worker_name: Optional worker name to use
             decode: Whether to decode the result
             exec_env: Optional execution environment configuration
+            resources: Optional task resources
         """
         lang_instance = Language.parse(lang)
         handle = await self._get_handler(lang_instance, worker_name, exec_env)
 
-        script_res = await handle.handle.exec(lang_instance.name, code, decode=decode)
+        script_res = await handle.handle.exec(lang_instance.name, code, decode=decode, resources=resources)
 
         try:
             encoded = script_res.data
@@ -358,6 +361,7 @@ class Lyric:
         lang: LanguageType = Language.PYTHON,
         worker_name: Optional[str] = None,
         exec_env: Optional[EXEC_ENV] = None,
+        resources: Optional[PyTaskResourceConfig] = None,
     ) -> Union[Tuple[Dict[str, Any], Dict[str, Any]], Tuple[bytes, bytes]]:
         """Execute code with input
 
@@ -370,6 +374,7 @@ class Lyric:
             lang: Language type of the code
             worker_name: Optional worker name to use
             exec_env: Optional execution environment configuration
+            resources: Optional task resources
         """
         lang_instance = Language.parse(lang)
         handle = await self._get_handler(lang_instance, worker_name, exec_env)
@@ -381,6 +386,7 @@ class Lyric:
             input=input_bytes,
             encode=encode,
             decode=decode,
+            resources=resources,
         )
 
         res_bytes = bytes(script_res[0].data)

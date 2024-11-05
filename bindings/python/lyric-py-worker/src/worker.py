@@ -11,6 +11,7 @@ wasm-tools print python_task.wasm | wasm-tools strip -a -o python_task_stripped.
 import sys
 import json
 import asyncio
+import traceback
 
 # import cloudpickle as pickle
 # import dill as pickle
@@ -43,6 +44,7 @@ class InterpreterTask(exports.InterpreterTask):
                 success = True
             except Exception as e:
                 print(f"[Python-InterpreterTask] Exception: {e}")
+                traceback.print_exc()
                 success = False
             stdout, stderr = capture.get_output()
 
@@ -91,6 +93,7 @@ class InterpreterTask(exports.InterpreterTask):
                 success = True
             except Exception as e:
                 err_msg = str(e)
+                traceback.print_exc()
                 stdout, stderr = capture.get_output()
                 stderr = stderr or ""
                 stderr += f"\nException:\n{err_msg}"

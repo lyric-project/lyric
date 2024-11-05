@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from lyric_task import Language, LanguageType
 
-from ._py_lyric import PyConfig, PyLocalEnvironmentConfig, PyLyric
+from ._py_lyric import PyConfig, PyLocalEnvironmentConfig, PyLyric, PyTaskResourceConfig
 from .config import DEFAULT_WORKER_PATH
 from .py_lyric import Lyric
 
@@ -137,6 +137,7 @@ class DefaultLyricDriver:
         lang: LanguageType = Language.PYTHON,
         worker_name: Optional[str] = None,
         decode: bool = True,
+        resources: Optional[PyTaskResourceConfig] = None,
     ) -> CodeResult:
         """Execute code in the specified language
 
@@ -145,13 +146,13 @@ class DefaultLyricDriver:
             lang: Programming language of the code (default: Python)
             worker_name: Optional name of specific worker to use
             decode: Whether to decode the execution result (default: True)
-
+            resources: Optional resource configuration for the task
         Returns:
             CodeResult containing execution status and output
         """
         try:
             res = await self._lyric.exec(
-                code, lang=lang, worker_name=worker_name, decode=decode
+                code, lang=lang, worker_name=worker_name, decode=decode, resources=resources
             )
             stdout = res.get("stdout", "")
             stderr = res.get("stderr", "")
@@ -171,6 +172,7 @@ class DefaultLyricDriver:
         decode: bool = True,
         lang: LanguageType = Language.PYTHON,
         worker_name: Optional[str] = None,
+        resources: Optional[PyTaskResourceConfig] = None,
     ) -> CodeResult:
         """Execute code with input data and a specific function call
 
@@ -182,6 +184,7 @@ class DefaultLyricDriver:
             decode: Whether to decode the result (default: True)
             lang: Programming language of the code (default: Python)
             worker_name: Optional name of specific worker to use
+            resources: Optional resource configuration for the task
 
         Returns:
             CodeResult containing execution status, output and additional data
@@ -196,6 +199,7 @@ class DefaultLyricDriver:
                 decode=decode,
                 lang=lang,
                 worker_name=worker_name,
+                resources=resources,
             )
             stdout = res.get("stdout", "")
             stderr = res.get("stderr", "")

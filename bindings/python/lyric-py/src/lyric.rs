@@ -230,6 +230,7 @@ impl PyLyric {
                             let handler = state_info.task_handler(component_id).unwrap();
                             let output = if let Some(task_input) = task_input {
                                 let req = types::BinaryRequest {
+                                    resources: None,
                                     protocol: 1_u32,
                                     data: task_input.data.into(),
                                 };
@@ -249,6 +250,7 @@ impl PyLyric {
                                 }
                             } else {
                                 let req = types::InterpreterRequest {
+                                    resources: None,
                                     protocol: 1_u32,
                                     lang: "rust".to_string(),
                                     code: "hello".to_string(),

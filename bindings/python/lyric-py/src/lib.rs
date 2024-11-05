@@ -3,6 +3,7 @@ mod env;
 mod error;
 mod handle;
 mod lyric;
+mod resource;
 mod task;
 mod types;
 
@@ -11,6 +12,10 @@ use config::{PyConfig, PyDriverConfig, PyWorkerConfig};
 use env::{PyDockerEnvironmentConfig, PyEnvironmentConfig, PyLocalEnvironmentConfig};
 use lyric::PyLyric;
 use pyo3::prelude::*;
+use resource::{
+    PyTaskCpuConfig, PyTaskFilePerms, PyTaskFsConfig, PyTaskInstanceLimits, PyTaskMemoryConfig,
+    PyTaskNetworkConfig, PyTaskResourceConfig,
+};
 use std::sync::OnceLock;
 use task::{
     PyDataObject, PyExecutionUnit, PyStreamDataObjectIter, PyTaskInfo, PyTaskOutputObject,
@@ -46,6 +51,14 @@ fn _py_lyric(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDockerEnvironmentConfig>().unwrap();
     m.add_class::<PyTaskCallArgs>().unwrap();
     m.add_class::<PyTaskHandle>().unwrap();
+    /// Resource Config
+    m.add_class::<PyTaskCpuConfig>().unwrap();
+    m.add_class::<PyTaskMemoryConfig>().unwrap();
+    m.add_class::<PyTaskNetworkConfig>().unwrap();
+    m.add_class::<PyTaskFilePerms>().unwrap();
+    m.add_class::<PyTaskFsConfig>().unwrap();
+    m.add_class::<PyTaskInstanceLimits>().unwrap();
+    m.add_class::<PyTaskResourceConfig>().unwrap();
     m.add_function(wrap_pyfunction!(from_python_iterator, m)?);
     Ok(())
 }

@@ -8,6 +8,7 @@ use crate::capability::wrpc::lyric::task;
 pub use crate::component::logging::Logging;
 use crate::error::WasmError;
 use anyhow::{anyhow, Context as _};
+use lyric_utils::resource::ResourceConfig;
 use std::fmt::Debug;
 use std::future::Future;
 use std::pin::Pin;
@@ -161,6 +162,8 @@ where
     table: ResourceTable,
     shared_resources: SharedResourceTable,
     timeout: Duration,
+    resource: Option<ResourceConfig>,
+    limits: wasmtime::StoreLimits,
 }
 
 impl<H: Handler> WasiView for Ctx<H> {
@@ -320,7 +323,10 @@ where
                     tracing::debug!(?name, "serving root function");
                     let func = srv
                         .serve_function(
-                            move || new_store(&engine, handler.clone(), max_execution_time, None),
+                            move || {
+                                new_store(&engine, handler.clone(), max_execution_time, None, None)
+                                    .expect("failed to create store")
+                            },
                             pre,
                             ty,
                             "",
@@ -380,7 +386,9 @@ where
                                                 handler.clone(),
                                                 max_execution_time,
                                                 None,
+                                                None,
                                             )
+                                            .expect("failed to create store")
                                         },
                                         pre,
                                         ty,
@@ -467,7 +475,8 @@ where
             handler,
             Duration::from_secs(10),
             Some("command.wasm"),
-        );
+            None,
+        )?;
         let cmd = wasmtime_wasi::bindings::CommandPre::new(self.instance_pre.clone())?
             .instantiate_async(&mut store)
             .await
@@ -521,14 +530,63 @@ pub fn new_store<H: Handler>(
     handler: H,
     max_execution_time: Duration,
     arg0: Option<&str>,
-) -> wasmtime::Store<Ctx<H>> {
+    resource: Option<ResourceConfig>,
+) -> anyhow::Result<wasmtime::Store<Ctx<H>>> {
+    tracing::info!("Creating new store with resource: {:?}", resource);
+    let resource = resource.unwrap_or_default();
+
     let table = ResourceTable::new();
     let arg0 = arg0.unwrap_or("main.wasm");
-    let wasi = WasiCtxBuilder::new()
-        .args(&[arg0]) // TODO: Configure argv[0]
-        .inherit_stdio()
-        .inherit_stderr()
-        .build();
+
+    let mut wasi_builder = WasiCtxBuilder::new();
+    wasi_builder.args(&[arg0]).inherit_stdio().inherit_stderr();
+
+    // Configure environment variables
+    for (key, value) in &resource.env_vars {
+        wasi_builder.env(key, value);
+    }
+
+    // Configure preopened directories
+    if let Some(fs_config) = &resource.fs {
+        // Configured pre-mapped directory list (host path, container path, directory permissions, file permissions)
+        for (host_path, guest_path, dir_perms, file_perms) in &fs_config.preopens {
+            let dir_perms = DirPerms::from_bits_truncate(dir_perms.bits());
+            let file_perms = FilePerms::from_bits_truncate(file_perms.bits());
+            tracing::info!(
+                "Pre-mapped directory: host_path={}, guest_path={}, dir_perms={:?}, file_perms={:?}",
+                host_path,
+                guest_path,
+                dir_perms,
+                file_perms
+            );
+            wasi_builder.preopened_dir(host_path, guest_path, dir_perms, file_perms)?;
+        }
+    }
+    let wasi = wasi_builder.build();
+
+    let timeout = resource
+        .timeout_ms
+        .map(|ms| Duration::from_millis(ms as u64))
+        .unwrap_or(max_execution_time);
+
+    let mut limits_builder = wasmtime::StoreLimitsBuilder::new();
+    if let Some(memory) = &resource.memory {
+        if let Some(memory_size) = memory.memory_limit {
+            limits_builder = limits_builder.memory_size(memory_size as usize);
+        }
+    }
+    if let Some(instance) = &resource.instance {
+        if let Some(max_instances) = instance.max_instances {
+            limits_builder = limits_builder.instances(max_instances as usize);
+        }
+        if let Some(max_tables) = instance.max_tables {
+            limits_builder = limits_builder.tables(max_tables as usize);
+        }
+        if let Some(max_table_elements) = instance.max_table_elements {
+            limits_builder = limits_builder.table_elements(max_table_elements);
+        }
+    }
+    let limits = limits_builder.build();
 
     let mut store = wasmtime::Store::new(
         engine,
@@ -538,13 +596,16 @@ pub fn new_store<H: Handler>(
             http: WasiHttpCtx::new(),
             table,
             shared_resources: SharedResourceTable::default(),
-            timeout: max_execution_time,
+            timeout,
+            resource: Some(resource),
+            limits,
         },
     );
     /// TODO: Limit the cpu time by setting fuel
-    /// store.set_fuel()
-    store.set_epoch_deadline(max_execution_time.as_secs());
-    store
+    // store.set_fuel()
+    store.limiter(|state| &mut state.limits);
+    store.set_epoch_deadline(timeout.as_secs());
+    Ok(store)
 }
 
 /// This represents a [Stream] of incoming invocations.

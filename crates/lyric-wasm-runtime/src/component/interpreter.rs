@@ -1,4 +1,5 @@
 use super::{Handler, Instance};
+use crate::capability::rpc_task;
 use crate::new_store;
 use anyhow::Context;
 use bytes::Bytes;
@@ -19,7 +20,7 @@ pub mod wrpc_handler_bindings {
         world: "interpreter-task",
         generate_all,
         with: {
-            "lyric:task/types@0.2.0": generate,
+            "lyric:task/types@0.2.0": crate::capability::rpc_task::types,
            "lyric:task/interpreter-task@0.2.0": generate,
         }
     });
@@ -34,21 +35,22 @@ where
     async fn run(
         &self,
         _: C,
-        wrpc_handler_bindings::lyric::task::types::InterpreterRequest {
+        rpc_task::types::InterpreterRequest {
+            resources,
             protocol,
             lang,
             code,
-        }: wrpc_handler_bindings::lyric::task::types::InterpreterRequest,
-    ) -> anyhow::Result<
-        Result<wrpc_handler_bindings::lyric::task::types::InterpreterResponse, String>,
-    > {
+        }: rpc_task::types::InterpreterRequest,
+    ) -> anyhow::Result<Result<rpc_task::types::InterpreterResponse, String>> {
         let mut store = new_store(
             &self.engine,
             self.handler.clone(),
             self.max_execution_time,
             None,
-        );
+            resources.map(|r| r.into()),
+        )?;
         let script = wasmtime_handler_bindings::lyric::task::types::InterpreterRequest {
+            resources: None,
             protocol,
             lang,
             code,
@@ -63,36 +65,35 @@ where
             .await
             .context("failed to call `lyric:task/interpreter-task`");
         res.map(|rs| {
-            rs.map(
-                |r| wrpc_handler_bindings::lyric::task::types::InterpreterResponse {
-                    protocol: r.protocol,
-                    // Vec<u8> to Bytes
-                    data: r.data.into(),
-                },
-            )
+            rs.map(|r| rpc_task::types::InterpreterResponse {
+                protocol: r.protocol,
+                // Vec<u8> to Bytes
+                data: r.data.into(),
+            })
         })
     }
 
     async fn run1(
         &self,
         _: C,
-        wrpc_handler_bindings::lyric::task::types::InterpreterRequest {
+        rpc_task::types::InterpreterRequest {
+            resources,
             protocol,
             lang,
             code,
-        }: wrpc_handler_bindings::lyric::task::types::InterpreterRequest,
+        }: rpc_task::types::InterpreterRequest,
         call_name: String,
         input: Bytes,
-    ) -> anyhow::Result<
-        Result<wrpc_handler_bindings::lyric::task::types::InterpreterOutputResponse, String>,
-    > {
+    ) -> anyhow::Result<Result<rpc_task::types::InterpreterOutputResponse, String>> {
         let mut store = new_store(
             &self.engine,
             self.handler.clone(),
             self.max_execution_time,
             None,
-        );
+            resources.map(|r| r.into()),
+        )?;
         let script = wasmtime_handler_bindings::lyric::task::types::InterpreterRequest {
+            resources: None,
             protocol,
             lang,
             code,
@@ -108,14 +109,12 @@ where
             .await
             .context("failed to call `lyric:task/interpreter-task`");
         res.map(|rs| {
-            rs.map(
-                |r| wrpc_handler_bindings::lyric::task::types::InterpreterOutputResponse {
-                    protocol: r.protocol,
-                    // Vec<u8> to Bytes
-                    data: r.data.into(),
-                    output: r.output.into(),
-                },
-            )
+            rs.map(|r| rpc_task::types::InterpreterOutputResponse {
+                protocol: r.protocol,
+                // Vec<u8> to Bytes
+                data: r.data.into(),
+                output: r.output.into(),
+            })
         })
     }
 }

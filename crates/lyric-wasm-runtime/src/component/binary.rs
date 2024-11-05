@@ -1,4 +1,5 @@
 use super::{Handler, Instance};
+use crate::capability::rpc_task;
 use crate::new_store;
 use anyhow::Context;
 use std::future::Future;
@@ -18,8 +19,8 @@ pub mod wrpc_handler_bindings {
         world: "binary-task",
         generate_all,
         with: {
-            "lyric:task/types@0.2.0": generate,
-           "lyric:task/binary-task@0.2.0": generate,
+            "lyric:task/types@0.2.0": crate::capability::rpc_task::types,
+            "lyric:task/binary-task@0.2.0": generate,
         }
     });
 }
@@ -32,19 +33,21 @@ where
     async fn run(
         &self,
         _: C,
-        wrpc_handler_bindings::lyric::task::types::BinaryRequest {
+        rpc_task::types::BinaryRequest {
+            resources,
             protocol,
-            data
-        }: wrpc_handler_bindings::lyric::task::types::BinaryRequest,
-    ) -> anyhow::Result<Result<wrpc_handler_bindings::lyric::task::types::BinaryResponse, String>>
-    {
+            data,
+        }: rpc_task::types::BinaryRequest,
+    ) -> anyhow::Result<Result<rpc_task::types::BinaryResponse, String>> {
         let mut store = new_store(
             &self.engine,
             self.handler.clone(),
             self.max_execution_time,
             None,
-        );
+            resources.map(|r| r.into()),
+        )?;
         let request = wasmtime_handler_bindings::lyric::task::types::BinaryRequest {
+            resources: None,
             protocol,
             // Bytes to Vec<u8>
             data: data.into(),
@@ -59,13 +62,11 @@ where
             .await
             .context("failed to call `lyric:task/interpreter-task`");
         res.map(|rs| {
-            rs.map(
-                |r| wrpc_handler_bindings::lyric::task::types::BinaryResponse {
-                    protocol: r.protocol,
-                    // Vec<u8> to Bytes
-                    data: r.data.into(),
-                },
-            )
+            rs.map(|r| rpc_task::types::BinaryResponse {
+                protocol: r.protocol,
+                // Vec<u8> to Bytes
+                data: r.data.into(),
+            })
         })
     }
 }
