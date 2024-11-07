@@ -39,6 +39,7 @@ serde = { workspace = true }
 
 chrono.workspace = true
 deadpool = "=0.12.1"
+hyper = "1.4"
 
 [dev-dependencies]
 wrpc-transport = { version = "0.28", default-features = false, features = ["net"]}

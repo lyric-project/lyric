@@ -1,6 +1,6 @@
 [project]
 name = "python"
-version = "0.1.4-rc0"
+version = "0.1.4"
 description = "Add your description here"
 authors = [
     { name = "Fangyin Cheng", email = "staneyffer@gmail.com" }
@@ -44,8 +44,10 @@ ensure_newline_before_comments = true
 fmt = { chain = [
     "black lyric-task",
     "black lyric-py",
+    "black lyric-py-worker",
     "isort lyric-task",
     "isort lyric-py",
+    "isort lyric-py-worker",
 ]}
 fmt-check = { chain = [
     "black --check lyric-task",

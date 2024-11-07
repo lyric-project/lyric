@@ -21,6 +21,8 @@ use wasi_preview1_component_adapter_provider::{
 };
 use wasmtime::component::{types, Linker, ResourceTable};
 use wasmtime_wasi::{DirPerms, FilePerms, WasiCtx, WasiCtxBuilder, WasiView};
+use wasmtime_wasi_http::bindings::http::types as wasi_http_types;
+use wasmtime_wasi_http::body::HyperOutgoingBody;
 use wasmtime_wasi_http::{WasiHttpCtx, WasiHttpView};
 use wit_bindgen_wrpc::futures::{Stream, TryStreamExt};
 use wrpc_runtime_wasmtime::{
@@ -198,6 +200,96 @@ impl<H: Handler> WasiHttpView for Ctx<H> {
     }
     fn table(&mut self) -> &mut ResourceTable {
         &mut self.table
+    }
+}
+
+impl<H: Handler> Ctx<H> {
+    fn check_network_access(
+        &self,
+        request: &hyper::Request<HyperOutgoingBody>,
+    ) -> Result<(), wasi_http_types::ErrorCode> {
+        let Some(resource) = &self.resource else {
+            // If no network configuration is provided, allow by default
+            return Ok(());
+        };
+        let Some(network_config) = &resource.network else {
+            // If no network configuration is provided, allow by default
+            return Ok(());
+        };
+
+        // Check if network is enabled
+        if !network_config.enable_network {
+            return Err(wasi_http_types::ErrorCode::InternalError(Some(
+                "Network access disabled".to_string(),
+            )));
+        }
+
+        // Parse the host and port of the request
+        let (host, port) = self.extract_host_port(request)?;
+
+        // Check host access permissions
+        if let Some(allowed_hosts) = &network_config.allowed_hosts {
+            if !self.check_host_allowed(allowed_hosts, &host) {
+                return Err(wasi_http_types::ErrorCode::InternalError(Some(format!(
+                    "Access to host {} not allowed",
+                    host
+                ))));
+            }
+        }
+
+        // Check port access permissions
+        if let Some(allowed_ports) = &network_config.allowed_ports {
+            if !self.check_port_allowed(allowed_ports, port) {
+                return Err(wasi_http_types::ErrorCode::InternalError(Some(format!(
+                    "Access to port {} not allowed",
+                    port
+                ))));
+            }
+        }
+
+        Ok(())
+    }
+    fn extract_host_port(
+        &self,
+        request: &hyper::Request<HyperOutgoingBody>,
+    ) -> Result<(String, u16), wasi_http_types::ErrorCode> {
+        let uri = request.uri();
+        let authority = uri.authority().ok_or_else(|| {
+            wasi_http_types::ErrorCode::InternalError(Some(
+                "Missing authority in request".to_string(),
+            ))
+        })?;
+
+        let host = authority.host().to_string();
+        let port = authority
+            .port_u16()
+            .unwrap_or(if uri.scheme_str() == Some("https") {
+                443
+            } else {
+                80
+            });
+
+        Ok((host, port))
+    }
+    fn check_host_allowed(&self, allowed_hosts: &[String], host: &str) -> bool {
+        allowed_hosts
+            .iter()
+            .any(|pattern| self.host_matches(pattern, host))
+    }
+
+    fn check_port_allowed(&self, allowed_ports: &[(u16, u16)], port: u16) -> bool {
+        allowed_ports
+            .iter()
+            .any(|(start, end)| port >= *start && port <= *end)
+    }
+
+    fn host_matches(&self, pattern: &str, host: &str) -> bool {
+        if pattern.starts_with("*.") {
+            // Handle wildcard matching
+            host.ends_with(&pattern[1..]) || host == &pattern[2..]
+        } else {
+            pattern == host
+        }
     }
 }
 

@@ -8,31 +8,39 @@ wasm-tools strip -a
 wasm-tools print python_task.wasm | wasm-tools strip -a -o python_task_stripped.wasm
 """
 
-import sys
-import json
 import asyncio
+import json
+import sys
 import traceback
+from typing import List
 
-# import cloudpickle as pickle
-# import dill as pickle
-# import lyric_task
-# from lyric_task import pickle as pickle
-import cloudpickle
 import click
+import cloudpickle
+import lyric_task
 import rich
 import shortuuid
-import lyric_task
-
+from lyric_py_task import Err, Ok, Optional, exports
+from lyric_py_task.imports import (
+    lyric_task_types,
+    msgpack,
+    outgoing_handler,
+    wasi_http_types,
+)
+from lyric_py_task.imports.streams import (
+    InputStream,
+    OutputStream,
+    StreamError_Closed,
+    StreamError_LastOperationFailed,
+)
+from lyric_py_task.imports.wasi_http_types import FutureTrailers, IncomingBody
 from lyric_task.log import IOCapture
 from lyric_task.std import *
 
-from lyric_py_task import exports, imports
-from lyric_py_task.imports import msgpack
 
 class InterpreterTask(exports.InterpreterTask):
     def run(
-        self, script: exports.types.InterpreterRequest
-    ) -> exports.types.InterpreterResponse:
+        self, script: lyric_task_types.InterpreterRequest
+    ) -> lyric_task_types.InterpreterResponse:
         """
         Raises: `interpreter_task.types.Err(interpreter_task.imports.str)`
         """
@@ -62,11 +70,11 @@ class InterpreterTask(exports.InterpreterTask):
         )
         test_result = msgpack.deserialize(serialized)
         print(f"[Python-InterpreterTask] test_result: {test_result}")
-        return exports.types.InterpreterResponse(protocol=1, data=serialized)
+        return lyric_task_types.InterpreterResponse(protocol=1, data=serialized)
 
     def run1(
-        self, request: exports.types.InterpreterRequest, call_name: str, input: bytes
-    ) -> exports.types.InterpreterOutputResponse:
+        self, request: lyric_task_types.InterpreterRequest, call_name: str, input: bytes
+    ) -> lyric_task_types.InterpreterOutputResponse:
         print(f"[Python-InterpreterTask] script: {request}")
         print(f"[Python-InterpreterTask] call_name: {call_name}")
 
@@ -116,13 +124,15 @@ class InterpreterTask(exports.InterpreterTask):
         output_bytes = msgpack.serialize(
             json.dumps(output_dict, ensure_ascii=False).encode("utf-8")
         )
-        return exports.types.InterpreterOutputResponse(
+        return lyric_task_types.InterpreterOutputResponse(
             protocol=1, data=result_bytes, output=output_bytes
         )
 
 
 class BinaryTask(exports.BinaryTask):
-    def run(self, request: exports.types.BinaryRequest) -> exports.types.BinaryResponse:
+    def run(
+        self, request: lyric_task_types.BinaryRequest
+    ) -> lyric_task_types.BinaryResponse:
         """
         Raises: `binary_task.types.Err(binary_task.imports.str)`
         """
@@ -134,7 +144,7 @@ class BinaryTask(exports.BinaryTask):
             print(callable_task)
             task_res = callable_task()
             print(f"[Python-BinaryTask] task_res: {task_res}")
-            return exports.types.BinaryResponse(protocol=1, data=dumps(task_res))
+            return lyric_task_types.BinaryResponse(protocol=1, data=dumps(task_res))
         else:
             raise Exception(f"Unsupported protocol {request.protocol}")
 

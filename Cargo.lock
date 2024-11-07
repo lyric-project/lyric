@@ -1168,9 +1168,9 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
 name = "hyper"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50dfd22e0e76d0f662d429a5f80fcaf3855009297eab6a0a9f8543834744ba05"
+checksum = "bbbff0a806a4728c99295b254c8838933b5b082d75e3cb70c8dab21fdfbcfa9a"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1478,7 +1478,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "lyric"
-version = "0.1.4-rc0"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "bollard",
@@ -1507,7 +1507,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-py"
-version = "0.1.4-rc0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-rpc"
-version = "0.1.4-rc0"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "lyric-utils",
@@ -1546,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-utils"
-version = "0.1.4-rc0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1563,7 +1563,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-wasm-runtime"
-version = "0.1.4-rc0"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -1572,6 +1572,7 @@ dependencies = [
  "chrono",
  "deadpool",
  "futures",
+ "hyper",
  "lyric-utils",
  "rmp-serde",
  "serde",
