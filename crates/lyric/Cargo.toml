@@ -13,7 +13,7 @@ description = "A Rust-powered secure sandbox for multi-language code execution, 
 [dependencies]
 lyric-utils = { workspace = true }
 lyric-rpc = { workspace = true }
-lyric-wasm-runtime = { workspace = true }
+lyric-wasm-runtime = { workspace = true , features=["tcp"]}
 uuid =  { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "process"] }
 chrono = { workspace = true }

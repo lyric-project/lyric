@@ -1,18 +1,14 @@
-use async_trait::async_trait;
-use futures::TryFutureExt;
-use std::future::Future;
-use std::sync::Arc;
-// use pyo3::{pyclass, pymethods, PyErr, PyObject, PyRef, PyRefMut, PyResult};
 use crate::resource::PyTaskResourceConfig;
 use crate::task::{PyDataObject, PyTaskStateInfo};
+use async_trait::async_trait;
+use futures::TryFutureExt;
 use lyric::task_ext::{ClientType, MsgpackDeserializeExt, MsgpackSerializeExt, TaskHandle};
-use lyric::{Lyric, TaskDescription, TokioRuntime};
 use lyric_rpc::task::{DataFormat, DataObject};
-use lyric_utils::err::Error;
 use lyric_wasm_runtime::Handler;
 use pyo3::prelude::*;
+use std::future::Future;
+use std::sync::Arc;
 use tokio::sync::Mutex;
-use wrpc_transport::Invoke;
 
 #[async_trait]
 trait TaskCaller {
@@ -37,7 +33,7 @@ impl PyTaskCallArgs {
 #[pyclass]
 #[derive(Clone)]
 pub struct PyTaskHandle {
-    pub(crate) inner: Arc<Mutex<TaskHandle<String>>>,
+    pub(crate) inner: Arc<Mutex<TaskHandle>>,
 }
 
 #[pymethods]
@@ -186,7 +182,7 @@ impl PyTaskHandle {
 impl PyTaskHandle {
     async fn do_exec<F, U, T>(&self, f: F) -> PyResult<T>
     where
-        F: FnOnce(Handler<ClientType<String>>) -> U + Send + 'static,
+        F: FnOnce(Handler<ClientType>) -> U + Send + 'static,
         U: Future<Output = PyResult<T>> + Send + 'static,
         T: Send + 'static,
     {

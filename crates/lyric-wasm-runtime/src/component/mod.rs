@@ -320,7 +320,7 @@ where
                     WASI_SNAPSHOT_PREVIEW1_REACTOR_ADAPTER,
                 )
                 .context("failed to add WASI preview1 adapter")?;
-            let wasm = if let Some((name, adapter)) = adapter {
+            let mut wasm = if let Some((name, adapter)) = adapter {
                 wasm.adapter(name, adapter)
                     .context(format!("failed to add adapter: {}", name))?
             } else {
@@ -675,7 +675,7 @@ pub fn new_store<H: Handler>(
             limits_builder = limits_builder.tables(max_tables as usize);
         }
         if let Some(max_table_elements) = instance.max_table_elements {
-            limits_builder = limits_builder.table_elements(max_table_elements);
+            limits_builder = limits_builder.table_elements(max_table_elements as usize);
         }
     }
     let limits = limits_builder.build();

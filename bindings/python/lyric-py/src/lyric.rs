@@ -163,7 +163,15 @@ impl PyLyric {
                         state_info.exit_code, state_info.stderr
                     )));
                 }
-                let handler = state_info.task_handler(component_id).unwrap();
+                let handler = self
+                    .runtime
+                    .runtime
+                    .spawn(async move { state_info.task_handler(component_id).await })
+                    .await
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?
+                    .map_err(|e| {
+                        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string())
+                    })?;
                 let th = TaskHandle::new(
                     self.lyric.clone(),
                     self.runtime.clone(),
@@ -227,7 +235,7 @@ impl PyLyric {
                                     state_info.stderr
                                 );
                             }
-                            let handler = state_info.task_handler(component_id).unwrap();
+                            let handler = state_info.task_handler(component_id).await.unwrap();
                             let output = if let Some(task_input) = task_input {
                                 let req = types::BinaryRequest {
                                     resources: None,
