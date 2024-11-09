@@ -339,7 +339,9 @@ class Lyric:
         lang_instance = Language.parse(lang)
         handle = await self._get_handler(lang_instance, worker_name, exec_env)
 
-        script_res = await handle.handle.exec(lang_instance.name, code, decode=decode, resources=resources)
+        script_res = await handle.handle.exec(
+            lang_instance.name, code, decode=decode, resources=resources
+        )
 
         try:
             encoded = script_res.data

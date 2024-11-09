@@ -55,7 +55,7 @@ class DefaultLyricDriver:
     def __init__(
         self,
         host: str = "127.0.0.1",
-        port: int = 15670,
+        port: Optional[int] = None,
         maximum_workers: int = 20,
         minimum_workers: int = 1,
         log_level: str = "ERROR",
@@ -65,7 +65,7 @@ class DefaultLyricDriver:
 
         Args:
             host: Host address for the driver (default: "127.0.0.1")
-            port: Port number for the driver (default: 15670)
+            port: Port number for the driver (default: None, auto-assign)
             maximum_workers: Maximum number of concurrent worker processes (default: 20)
             minimum_workers: Minimum number of worker processes to maintain (default: 1)
             log_level: Logging level for the driver (default: "ERROR")
@@ -96,7 +96,7 @@ class DefaultLyricDriver:
             port=port,
             is_driver=True,
             public_host=public_host,
-            worker_port_start=15671,
+            worker_port_start=15670,
             worker_port_end=16670,
             maximum_workers=maximum_workers,
             minimum_workers=minimum_workers,
@@ -152,7 +152,11 @@ class DefaultLyricDriver:
         """
         try:
             res = await self._lyric.exec(
-                code, lang=lang, worker_name=worker_name, decode=decode, resources=resources
+                code,
+                lang=lang,
+                worker_name=worker_name,
+                decode=decode,
+                resources=resources,
             )
             stdout = res.get("stdout", "")
             stderr = res.get("stderr", "")

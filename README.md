@@ -21,19 +21,19 @@ A Rust-powered secure sandbox for multi-language code execution, leveraging WebA
 **Install Lyric via pip:**
 
 ```bash
-pip install "lyric-py>=0.1.4rc0"
+pip install "lyric-py>=0.1.4"
 ```
 
 **Install default Python webassembly worker:**
 
 ```bash
-pip install "lyric-py-worker>=0.1.4rc0"
+pip install "lyric-py-worker>=0.1.4"
 ```
 
 **Install default JavaScript webassembly worker:**
 
 ```bash
-pip install "lyric-js-worker>=0.1.4rc0"
+pip install "lyric-js-worker>=0.1.4"
 ```
 
 ### Basic Usage
@@ -188,6 +188,16 @@ async def main():
 
 asyncio.run(main())
 ```
+
+## Architecture
+
+Lyric core is built with Rust, providing a high-performance and secure runtime environment for multi-language code 
+execution. 
+
+The following diagram illustrates the architecture of Lyric:
+
+![Lyric Architecture](docs/asserts/imgs/lyric_architecture.png)
+
 
 ## Examples
 

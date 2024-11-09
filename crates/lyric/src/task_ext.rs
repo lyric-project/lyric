@@ -2,33 +2,27 @@ use crate::{Lyric, TaskDescription, TokioRuntime, WrappedData};
 use async_trait::async_trait;
 use lyric_rpc::task::{DataObject, ExecutionUnit, TaskStateInfo};
 use lyric_utils::prelude::{Error, TaskError};
-use lyric_wasm_runtime::Handler;
+use lyric_wasm_runtime::{DefaultClient, Handler};
 use serde_json::Value;
 use std::sync::Arc;
 use wrpc_transport::Invoke;
 
-pub type ClientType<T> = wrpc_transport::tcp::Client<T>;
+pub type ClientType = DefaultClient;
 
-pub struct TaskHandle<T>
-where
-    T: Clone + Send + Sync + 'static + tokio::net::ToSocketAddrs,
-{
-    handler: Handler<ClientType<T>>,
+pub struct TaskHandle {
+    handler: Handler<DefaultClient>,
     pub lyric: Lyric,
     pub runtime: TokioRuntime,
     pub task_description: Arc<TaskDescription>,
     is_stop: bool,
 }
 
-impl<T> TaskHandle<T>
-where
-    T: Clone + Send + Sync + 'static + tokio::net::ToSocketAddrs,
-{
+impl TaskHandle {
     pub fn new(
         lyric: Lyric,
         runtime: TokioRuntime,
         task_description: Arc<TaskDescription>,
-        handler: Handler<ClientType<T>>,
+        handler: Handler<DefaultClient>,
     ) -> Self {
         Self {
             handler,
@@ -38,7 +32,7 @@ where
             is_stop: false,
         }
     }
-    pub fn copy_handler(&self) -> Handler<ClientType<T>> {
+    pub fn copy_handler(&self) -> Handler<DefaultClient> {
         self.handler.clone()
     }
 
@@ -54,10 +48,7 @@ where
     }
 }
 
-impl<T> Drop for TaskHandle<T>
-where
-    T: Clone + Send + Sync + 'static + tokio::net::ToSocketAddrs,
-{
+impl Drop for TaskHandle {
     fn drop(&mut self) {
         tracing::info!("Dropping task handle: {:?}", self.task_description.task_id);
         if !self.is_stop {
@@ -106,31 +97,28 @@ impl TaskBytesExt for Option<ExecutionUnit> {
     }
 }
 
+#[async_trait]
 pub trait TaskHandlerExt {
     type Client: Invoke + Clone + 'static;
 
-    fn task_handler(&mut self, component_id: String) -> Result<Handler<Self::Client>, Error>;
+    async fn task_handler(&mut self, component_id: String) -> Result<Handler<Self::Client>, Error>;
 }
 
+#[async_trait]
 impl TaskHandlerExt for TaskStateInfo {
-    type Client = ClientType<String>;
+    type Client = DefaultClient;
 
-    fn task_handler(&mut self, component_id: String) -> Result<Handler<Self::Client>, Error> {
+    async fn task_handler(&mut self, component_id: String) -> Result<Handler<Self::Client>, Error> {
         match self.output.take() {
-            Some(DataObject {
-                object_id,
-                format,
-                data,
-            }) => {
-                // Parse address from Vec<u8>
+            Some(DataObject { data, .. }) => {
                 let address = String::from_utf8(data)
                     .map_err(|_| Error::InternalError("Failed to parse address".to_string()))?;
                 tracing::info!("Connecting to component: {}", address);
-                let client = wrpc_transport::tcp::Client::from(address.clone());
-                Ok(Handler {
-                    component_id: Arc::from(component_id),
-                    client: Arc::new(client),
-                })
+
+                // Use the factory method provided by Handler directly
+                Handler::from_address(component_id, address)
+                    .await
+                    .map_err(|e| Error::InternalError(e.to_string()))
             }
             _ => Err(Error::InternalError(
                 "No output data object found".to_string(),

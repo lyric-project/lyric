@@ -39,6 +39,11 @@ build-wasm: setup build-task
         wasm-tools strip -a -o lyric_py_worker/python_worker.wasm \
         && rm python_worker_fat.wasm
 
+.PYTHON: build-bindings
+build-bindings: setup
+	cd src && source ../$(VENV_BIN)/activate && componentize-py \
+		-d ./wit -w lyric-py-task bindings .
+
 .PHONY: build
 build: build-wasm
 	rye build

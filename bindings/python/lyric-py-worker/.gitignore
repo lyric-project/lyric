@@ -9,3 +9,4 @@ wheels/
 # venv
 .venv
 python_task_fat.wasm
+src/lyric_py_task

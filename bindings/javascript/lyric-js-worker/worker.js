@@ -26,10 +26,9 @@ const interpreterTask = {
         };
 
         try {
-            console.log("Before run code in interpreter Task");
+            console.log("Begin to run javascript code in interpreter Task");
             // Use the Function constructor to create a new function so that we can capture the return value
             evalResult = new Function(codeString)();
-            console.log("After run code in interpreter Task");
         } catch (error) {
             console.error("Error occurred:", error.message);
             success = false;

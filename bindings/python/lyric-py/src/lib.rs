@@ -36,6 +36,9 @@ pub fn get_lyric_version() -> &'static str {
 #[pymodule]
 fn _py_lyric(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", get_lyric_version())?;
+    m.add_class::<PyConfig>().unwrap();
+    m.add_class::<PyWorkerConfig>().unwrap();
+    m.add_class::<PyDriverConfig>().unwrap();
     m.add_class::<PyLyric>().unwrap();
     m.add_class::<PyTaskInfo>().unwrap();
     m.add_class::<PyDataObject>().unwrap();
@@ -43,9 +46,6 @@ fn _py_lyric(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyStreamDataObjectIter>().unwrap();
     m.add_class::<PyTaskStateInfo>().unwrap();
     m.add_class::<PyExecutionUnit>().unwrap();
-    m.add_class::<PyConfig>().unwrap();
-    m.add_class::<PyDriverConfig>().unwrap();
-    m.add_class::<PyWorkerConfig>().unwrap();
     m.add_class::<PyEnvironmentConfig>().unwrap();
     m.add_class::<PyLocalEnvironmentConfig>().unwrap();
     m.add_class::<PyDockerEnvironmentConfig>().unwrap();
