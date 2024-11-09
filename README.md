@@ -189,6 +189,16 @@ async def main():
 asyncio.run(main())
 ```
 
+## Architecture
+
+Lyric core is built with Rust, providing a high-performance and secure runtime environment for multi-language code 
+execution. 
+
+The following diagram illustrates the architecture of Lyric:
+
+![Lyric Architecture](docs/asserts/imgs/lyric_architecture.png)
+
+
 ## Examples
 
 - [Notebook-Qick Start](examples/notebook/lyric_quick_start.ipynb): A Jupyter notebook demonstrating how to use Lyric to execute Python and JavaScript code.
