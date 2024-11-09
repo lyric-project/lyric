@@ -194,6 +194,12 @@ asyncio.run(main())
 - [Notebook-Qick Start](examples/notebook/lyric_quick_start.ipynb): A Jupyter notebook demonstrating how to use Lyric to execute Python and JavaScript code.
 - [Notebook-Sandbox Execution](examples/notebook/lyric_sandbox_verification.ipynb): A Jupyter notebook demonstrating how to use Lyric to execute Python and JavaScript code in a sandboxed environment.
 
+
+## Community Integrations
+
+- [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) AI Native Data App Development framework with AWEL(Agentic Workflow Expression Language) and Agents
+
+
 ## 🤝 Contributing
 
 We welcome Issues and Pull Requests! Please check out our [Contributing Guidelines](.github/CONTRIBUTING.md) for more information.
