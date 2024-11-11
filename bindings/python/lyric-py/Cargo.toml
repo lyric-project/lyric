@@ -45,8 +45,7 @@ serde = { workspace = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-#pyo3-pylogger = { workspace = true }
-futures = { workspace = true }
+futures = { workspace = true, features = ["std", "async-await", "executor"]}
 tokio-stream = { workspace = true }
 async-trait = { workspace = true }
 

@@ -19,6 +19,7 @@ use tracing::Instrument;
 use wasi_preview1_component_adapter_provider::{
     WASI_SNAPSHOT_PREVIEW1_ADAPTER_NAME, WASI_SNAPSHOT_PREVIEW1_REACTOR_ADAPTER,
 };
+use wasmparser::collections::Set;
 use wasmtime::component::{types, Linker, ResourceTable};
 use wasmtime_wasi::{DirPerms, FilePerms, WasiCtx, WasiCtxBuilder, WasiView};
 use wasmtime_wasi_http::bindings::http::types as wasi_http_types;
@@ -148,6 +149,25 @@ pub enum WrpcServeEvent<C> {
         context: C,
         success: bool,
     },
+}
+
+#[derive(Clone, Debug)]
+pub enum DependencyTypes {
+    ComponentFunc { instance: String, func: String },
+}
+
+impl DependencyTypes {
+    pub fn to_string(&self) -> String {
+        match self {
+            DependencyTypes::ComponentFunc { instance, func } => {
+                if instance.is_empty() {
+                    format!("func:{}", func)
+                } else {
+                    format!("instance:{} func:{}", instance, func)
+                }
+            }
+        }
+    }
 }
 
 pub trait Handler: Invoke<Context = ()> + Logging + Send + Sync + Clone + 'static {}
@@ -300,6 +320,7 @@ where
 {
     engine: wasmtime::Engine,
     instance_pre: wasmtime::component::InstancePre<Ctx<H>>,
+    pub(crate) depends_on: Vec<String>,
 }
 
 impl<H> Component<H>
@@ -350,17 +371,21 @@ where
         if !guest_resources.is_empty() {
             tracing::warn!("exported component resources are not supported in wasmCloud runtime and will be ignored, use a provider instead to enable this functionality");
         }
+        let mut depends_on = vec![];
         for (name, ty) in ty.imports(&engine) {
+            // Linking other components by wrpc calls
             skip_static_instances!(name);
             tracing::info!("Linking import: {}", name);
             link_item(&engine, &mut linker.root(), [], ty, "", name, ())
                 .context("failed to link item")?;
+            depends_on.push(name.to_string());
         }
 
         let instance_pre = linker.instantiate_pre(&component)?;
         Ok(Self {
             engine,
             instance_pre,
+            depends_on,
         })
     }
 
@@ -369,7 +394,7 @@ where
         srv: &S,
         handler: H,
         events: mpsc::Sender<WrpcServeEvent<S::Context>>,
-    ) -> anyhow::Result<Vec<InvocationStream>>
+    ) -> anyhow::Result<(Vec<InvocationStream>, Vec<DependencyTypes>)>
     where
         S: wrpc_transport::Serve,
     {
@@ -384,6 +409,7 @@ where
             max_execution_time: max_execution_time.clone(),
         };
         let mut invocations = vec![];
+        let mut exports = vec![];
 
         for (name, ty) in self
             .instance_pre
@@ -391,6 +417,7 @@ where
             .component_type()
             .exports(&self.engine)
         {
+            tracing::debug!(?name, "serving root export");
             match (name, ty) {
                 (
                     "lyric:task/interpreter-task@0.2.0",
@@ -404,7 +431,14 @@ where
                     )
                         .await
                         .context("failed to serve `lyric:task/interpreter-task@0.2.0`")?;
-                    for (_, _, handle_message) in res {
+                    for (f1, f2, handle_message) in res {
+                        // f1="lyric:task/interpreter-task@0.2.0" f2="run"
+                        // f1="lyric:task/interpreter-task@0.2.0" f2="run1"
+                        tracing::debug!(?f1, ?f2, "serving interpreter task");
+                        exports.push(DependencyTypes::ComponentFunc {
+                            instance: f1.to_string(),
+                            func: f2.to_string(),
+                        });
                         invocations.push(handle_message);
                     }
                 }
@@ -428,6 +462,10 @@ where
                         .context("failed to serve root function")?;
                     let events = events.clone();
                     let span = span.clone();
+                    exports.push(DependencyTypes::ComponentFunc {
+                        instance: "".to_string(),
+                        func: name.to_string(),
+                    });
                     invocations.push(Box::pin(func.map_ok(move |(cx, res)| {
                         let events = events.clone();
                         Box::pin(
@@ -491,6 +529,10 @@ where
                                     .context("failed to serve instance function")?;
                                 let events = events.clone();
                                 let span = span.clone();
+                                exports.push(DependencyTypes::ComponentFunc {
+                                    instance: instance_name.to_string(),
+                                    func: name.to_string(),
+                                });
                                 invocations.push(Box::pin(func.map_ok(move |(cx, res)| {
                                     let events = events.clone();
                                     Box::pin(
@@ -551,7 +593,7 @@ where
                 (_, types::ComponentItem::Type(_) | types::ComponentItem::Resource(_)) => {}
             }
         }
-        Ok(invocations)
+        Ok((invocations, exports))
     }
 
     pub fn with_instance_pre<T>(

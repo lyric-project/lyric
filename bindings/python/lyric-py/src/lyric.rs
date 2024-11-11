@@ -566,7 +566,7 @@ fn extract_callback_result(
         Ok(TaskStateResult::TaskState(state_info))
     } else if let Ok(mut py_stream) = result.extract::<PyRef<PyUnboundedReceiverStream>>(py) {
         tracing::debug!("Received item from stream from execute result");
-        // 创建一个新的 UnboundedReceiverStream
+        // Create a new UnboundedReceiverStream
         let (tx, rx) = unbounded_channel();
         let new_stream = UnboundedReceiverStream::new(rx);
 

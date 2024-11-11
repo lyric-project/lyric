@@ -38,9 +38,31 @@ pub fn init_tracing_subscriber<T: Into<String>, E: AsRef<str>>(target: T, defaul
     }
 
     set_target(target.into());
-    let env_filter = EnvFilter::try_from_env("LYRIC_CORE_LOG_LEVEL")
+    let base_filter = EnvFilter::try_from_env("LYRIC_CORE_LOG_LEVEL")
         .or(EnvFilter::try_from_env("RUST_LOG"))
-        .unwrap_or_else(|_| EnvFilter::new(default_level));
+        .unwrap_or_else(|_| EnvFilter::new(default_level.as_ref()));
+
+    let env_filter = {
+        let mut filter = base_filter;
+
+        // Read module level configuration from dedicated environment variables
+        if let Ok(module_levels) = env::var("LYRIC_CORE_MODULE_LEVELS") {
+            // Parse and add configuration for each module
+            for directive in module_levels.split(',') {
+                if let Ok(parsed) = directive.parse() {
+                    filter = filter.add_directive(parsed);
+                }
+            }
+        } else {
+            // If no environment variables are configured, use the default module level configuration
+            // These configurations will override the corresponding configurations of the base filter
+            filter = filter.add_directive("cranelift_codegen=info".parse().unwrap());
+            filter = filter.add_directive("wasmtime_cranelift=info".parse().unwrap());
+            filter = filter.add_directive("wit_parser=info".parse().unwrap());
+            filter = filter.add_directive("wit_component=info".parse().unwrap());
+        }
+        filter
+    };
 
     let with_ansicolor = env::var("LYRIC_CORE_LOG_ANSICOLOR")
         .map(|v| v.to_lowercase() == "true")

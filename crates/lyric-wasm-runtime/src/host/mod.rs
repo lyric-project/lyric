@@ -3,7 +3,7 @@ use anyhow::bail;
 use async_stream::try_stream;
 use futures::{join, pin_mut, stream, try_join, Stream, StreamExt, TryFutureExt, TryStreamExt};
 use std::borrow::Cow;
-use std::collections::{hash_map, HashMap};
+use std::collections::{hash_map, HashMap, HashSet};
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -14,7 +14,8 @@ use tracing::Instrument;
 use wrpc_interface_http::InvokeOutgoingHandler;
 use wrpc_transport::{Invoke, Serve};
 
-use super::component::{Component, WrpcServeEvent};
+use super::component::{Component, DependencyTypes, WrpcServeEvent};
+use crate::host::handler::compute_dependencies;
 pub use handler::Handler;
 
 mod handler;
@@ -47,6 +48,7 @@ where
             + 'static,
     > {
         let instance = format!("{}@{}", self.component_id, instance);
+        tracing::info!("serving instance: {}", instance);
         let func = func.to_string();
         let paths = paths.into();
         let server = self.server.clone();
@@ -71,6 +73,7 @@ where
     id: Arc<str>,
     handler: Handler<C>,
     exports: JoinHandle<()>,
+    export_names: Vec<DependencyTypes>,
 }
 
 pub struct Host<C, S>
@@ -82,6 +85,7 @@ where
     server: Arc<S>,
     engine: wasmtime::Engine,
     components: RwLock<HashMap<String, Arc<HostComponent<C>>>>,
+    export_index: RwLock<HashMap<String, Vec<(String, DependencyTypes)>>>, // component_id -> [(export_name, DependencyTypes)]
 }
 
 impl<C, S> Host<C, S>
@@ -99,24 +103,29 @@ where
             server,
             engine: wasmtime::Engine::new(&config).unwrap(),
             components: RwLock::new(HashMap::new()),
+            export_index: RwLock::new(HashMap::new()),
         }
     }
 
+    /// Launch a component with the given wasm bytes.
+    ///
+    /// # Arguments
+    /// * `component_id` - The unique identifier of the component.
+    /// * `wasm` - The wasm bytes of the component.
+    /// * `adapter` - The adapter wasm bytes of the component.
+    /// * `depends_on` - The set of component ids that the component depends on.
     pub async fn launch_component(
         &self,
         component_id: &str,
         wasm: Vec<u8>,
         adapter: Option<(&str, &[u8])>,
+        depends_on: Option<HashSet<String>>,
     ) -> Result<(), WasmError> {
-        match self
-            .components
-            .write()
-            .await
-            .entry(component_id.to_string())
-        {
+        let uid = uuid::Uuid::new_v4().to_string();
+        match self.components.write().await.entry(uid) {
             hash_map::Entry::Occupied(_) => {}
             hash_map::Entry::Vacant(entry) => {
-                self.start_component(component_id, entry, wasm, adapter)
+                self.start_component(component_id, entry, wasm, adapter, depends_on)
                     .await?;
             }
         };
@@ -126,8 +135,10 @@ where
 
     pub async fn remove_component(&self, component_id: &str) -> Result<(), WasmError> {
         let mut components = self.components.write().await;
+        let mut export_index = self.export_index.write().await;
         if let Some(host_component) = components.remove(component_id) {
             host_component.exports.abort();
+            export_index.remove(component_id);
         }
         Ok(())
     }
@@ -138,17 +149,63 @@ where
         entry: hash_map::VacantEntry<'a, String, Arc<HostComponent<C>>>,
         wasm: Vec<u8>,
         adapter: Option<(&str, &[u8])>,
+        depends_on: Option<HashSet<String>>,
     ) -> Result<(), WasmError> {
-        let handler = Handler {
-            component_id: Arc::from(component_id),
-            client: self.client.clone(),
-        };
         let component = Component::new(self.engine.clone(), &wasm, adapter)?;
+        let depends_on_fns = component.depends_on.clone();
+        // Get the write lock on the export index
+        let mut export_index = self.export_index.write().await;
+
+        let depends_to_component = compute_dependencies(
+            &depends_on_fns,
+            &depends_on.unwrap_or_default(),
+            &export_index,
+        )
+        .map_err(|e| WasmError::HandlerCreationError(e.to_string()))?;
+
+        let handler = Handler::new(
+            Arc::from(component_id),
+            self.client.clone(),
+            depends_to_component,
+        )
+        .map_err(|e| WasmError::HandlerCreationError(e.to_string()))?;
+
         let host_component = self
             .instantiate_component(component_id, component, handler)
             .await?;
+
+        export_index.insert(
+            component_id.to_string(),
+            host_component
+                .export_names
+                .iter()
+                .map(|export| (export.to_string(), export.clone()))
+                .collect(),
+        );
+
         entry.insert(host_component);
         Ok(())
+    }
+
+    async fn update_export_index(
+        &self,
+        component_id: &str,
+        export_names: &[DependencyTypes],
+        export_index: &mut HashMap<String, (String, Option<String>)>,
+    ) {
+        for export in export_names {
+            match export {
+                DependencyTypes::ComponentFunc { instance, func } => {
+                    let key = format!("{}:{}", instance, func);
+                    export_index.insert(key, (component_id.to_string(), Some(func.clone())));
+                    // Add the instance level mapping at the same time
+                    let instance_key = instance.clone();
+                    if !export_index.contains_key(&instance_key) {
+                        export_index.insert(instance_key, (component_id.to_string(), None));
+                    }
+                }
+            }
+        }
     }
 
     async fn instantiate_component(
@@ -164,28 +221,28 @@ where
             server: server.clone(),
             paths: Mutex::new(HashMap::new()),
         };
-        let exports = component
+        let (exports_invocations, exports) = component
             .serve_wrpc(&ws, handler.clone(), events_tx)
             .await?;
-        tracing::info!("The size of exports is: {}", exports.len());
+        tracing::info!("The size of exports is: {}", exports_invocations.len());
         let max_instances = 10_usize;
         let permits = Arc::new(Semaphore::new(
             usize::from(max_instances).min(Semaphore::MAX_PERMITS),
         ));
         Ok(Arc::new(HostComponent {
             component,
-            id: Arc::from(""),
+            id: Arc::from(component_id),
             handler,
             exports: tokio::task::spawn(
                 async move {
                     join!(
                         async move {
                             let mut tasks = JoinSet::new();
-                            let mut exports = stream::select_all(exports);
+                            let mut exports_invocations = stream::select_all(exports_invocations);
                             loop {
                                 let permits = Arc::clone(&permits);
                                 select! {
-                                    Some(fut) = exports.next() => {
+                                    Some(fut) = exports_invocations.next() => {
                                         match fut {
                                             Ok(fut) => {
                                                 tracing::debug!("accepted invocation, acquiring permit");
@@ -244,6 +301,7 @@ where
                 }
                     .in_current_span(),
             ),
+            export_names: exports,
         }))
     }
 }

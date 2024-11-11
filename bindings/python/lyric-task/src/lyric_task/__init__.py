@@ -101,6 +101,7 @@ class Language(BaseEnum):
     JAVASCRIPT = 1
     SHELL = 2
     RUST = 3
+    TYPESCRIPT = 4
 
 
 LanguageType = Union[Language, int, str]

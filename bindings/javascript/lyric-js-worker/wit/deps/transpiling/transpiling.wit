@@ -1,0 +1,15 @@
+package lyric:transpiling@0.2.0;
+
+interface typescript-transpile {
+    record transpile-request{
+        /// The source code to transpile
+        text: string,
+        /// The target language to transpile to, default to "cjs"(CommonJS)
+        target: string,
+    }
+    record transpile-response{
+        text: string,
+    }
+    /// Transpile the source code to the target language
+    transpile: func(request: transpile-request) -> result<transpile-response, string>;
+}

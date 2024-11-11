@@ -1,0 +1,5 @@
+package lyric:ts-transpiling;
+
+world ts-transpiling {
+    export lyric:transpiling/typescript-transpile@0.2.0;
+}

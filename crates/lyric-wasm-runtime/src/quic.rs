@@ -341,7 +341,7 @@ impl WasmRuntime {
         tracing::info!("launching component: {}", component_id);
         self.inner
             .host
-            .launch_component(component_id, wasm, None)
+            .launch_component(component_id, wasm, None, None)
             .await
     }
 
