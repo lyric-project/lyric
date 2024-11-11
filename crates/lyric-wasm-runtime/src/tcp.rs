@@ -1,16 +1,13 @@
 use crate::error::WasmError;
 use crate::Host;
 use anyhow::Context;
-use async_trait::async_trait;
 use core::net::SocketAddr;
 use std::fmt;
 use std::fmt::{Debug, Formatter};
-use std::future::Future;
 use std::sync::Arc;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use tokio::net::TcpStream;
 use wrpc_transport::frame::tcp::Client;
-use wrpc_transport::frame::{Incoming, Outgoing, Server};
+use wrpc_transport::frame::Server;
 
 struct Inner {
     address: String,
@@ -61,7 +58,7 @@ impl WasmRuntime {
     ) -> Result<(), WasmError> {
         self.inner
             .host
-            .launch_component(component_id, wasm, None)
+            .launch_component(component_id, wasm, None, None)
             .await
     }
 

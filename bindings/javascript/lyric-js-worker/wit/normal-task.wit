@@ -2,6 +2,8 @@ package lyric:hello;
 
 world simple-task {
   import lyric:serialization/msgpack@0.2.0;
+  import lyric:transpiling/typescript-transpile@0.2.0;
+
   export lyric:task/interpreter-task@0.2.0;
   export lyric:task/binary-task@0.2.0;
 }

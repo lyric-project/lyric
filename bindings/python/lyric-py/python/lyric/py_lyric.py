@@ -337,7 +337,10 @@ class Lyric:
             resources: Optional task resources
         """
         lang_instance = Language.parse(lang)
-        handle = await self._get_handler(lang_instance, worker_name, exec_env)
+        handle_lang = lang_instance
+        if lang_instance == Language.TYPESCRIPT:
+            handle_lang = Language.JAVASCRIPT
+        handle = await self._get_handler(handle_lang, worker_name, exec_env)
 
         script_res = await handle.handle.exec(
             lang_instance.name, code, decode=decode, resources=resources
@@ -379,7 +382,10 @@ class Lyric:
             resources: Optional task resources
         """
         lang_instance = Language.parse(lang)
-        handle = await self._get_handler(lang_instance, worker_name, exec_env)
+        handle_lang = lang_instance
+        if lang_instance == Language.TYPESCRIPT:
+            handle_lang = Language.JAVASCRIPT
+        handle = await self._get_handler(handle_lang, worker_name, exec_env)
 
         script_res = await handle.handle.exec1(
             lang_instance.name,

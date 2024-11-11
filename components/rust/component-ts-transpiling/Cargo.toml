@@ -1,0 +1,19 @@
+[package]
+name = "component-ts-transpiling"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[package.metadata]
+target = "wasm32-wasip1"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+deno_ast.workspace = true
+wit-bindgen.workspace = true
+wit-bindgen-wrpc.workspace = true

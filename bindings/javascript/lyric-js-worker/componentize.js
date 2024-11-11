@@ -14,7 +14,7 @@ import { resolve } from 'node:path';
 
 const enableAot = process.env.ENABLE_AOT === '1'
 
-const jsSource = await readFile('worker.js', 'utf8');
+const jsSource = await readFile('bundle/index.bundled.js', 'utf8');
 
 const { component } = await componentize(jsSource, {
     witPath: resolve('./wit'),

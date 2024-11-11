@@ -10,4 +10,10 @@ pub enum WasmError {
 
     #[error("Wasm runtime stopped, msg: `{0}`")]
     RuntimeStopped(String),
+
+    #[error("Failed to create handler: {0}")]
+    HandlerCreationError(String),
+
+    #[error("Failed to create component: {0}")]
+    DependencyNotFound(String),
 }

@@ -1,9 +1,51 @@
 import { serialize, deserialize } from 'lyric:serialization/msgpack@0.2.0';
+import { transpile } from 'lyric:transpiling/typescript-transpile@0.2.0';
+
+function transpileTypeScript(text) {
+    try {
+        const result = transpile({
+            "text": text,
+            "target": "cjs",
+        })
+        console.log(`Transpiled TypeScript code to JavaScript: ${result.text}`);
+        return {
+            success: true,
+            code: result.text
+        };
+    } catch (error) {
+        console.error(`TypeScript transform to JavaScript failed: ${error}`);
+        return {
+            success: false,
+            error: `TypeScript transform to JavaScript failed: ${error.message}`
+        };
+    }
+}
 
 const interpreterTask = {
     run(req) {
+        console.log(`[JavaScript-InterpreterTask] script: ${JSON.stringify(req)}`);
         const lang = req.lang;
-        const codeString = req.code;
+        let codeString = req.code;
+
+        if (lang.toLowerCase() === 'typescript') {
+            console.log("Transpiling TypeScript code to JavaScript");
+            const res = transpileTypeScript(codeString);
+            if (!res.success) {
+                console.log(`Transpiling TypeScript code to JavaScript failed: ${res.error}`);
+                return {
+                    protocol: 1,
+                    data: serialize(new TextEncoder().encode(JSON.stringify({
+                        lang: lang,
+                        protocol: 1,
+                        content: res.error,
+                        success: false,
+                        exit_code: 1
+                    })))
+                };
+            }
+            codeString = res.code;
+        }
+
 
         let stdout = [];
         let stderr = [];
@@ -71,6 +113,28 @@ const interpreterTask = {
         console.log(`[JavaScript-InterpreterTask] script: ${JSON.stringify(req)}`);
         console.log(`[JavaScript-InterpreterTask] call_name: ${call_name}`);
 
+        const lang = req.lang;
+        let codeString = req.code;
+
+        if (lang.toLowerCase() === 'typescript') {
+            console.log("Transpiling TypeScript code to JavaScript");
+            const res = transpileTypeScript(codeString);
+            if (!res.success) {
+                console.log(`Transpiling TypeScript code to JavaScript failed: ${res.error}`);
+                return {
+                    protocol: 1,
+                    data: serialize(new TextEncoder().encode(JSON.stringify({
+                        lang: lang,
+                        protocol: 1,
+                        content: res.error,
+                        success: false,
+                        exit_code: 1
+                    }))
+                )};
+            }
+            codeString = res.code;
+        }
+
         let stdout = [];
         let stderr = [];
         let result;
@@ -98,7 +162,7 @@ const interpreterTask = {
             var user_func;
 
             const new_code = `
-            ${req.code}
+            ${codeString}
             
             if (${call_name} == 'undefined') {
                 throw new Error('Function ${call_name} is not defined');

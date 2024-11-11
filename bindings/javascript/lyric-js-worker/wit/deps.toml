@@ -1,1 +1,2 @@
 http = "https://github.com/WebAssembly/wasi-http/archive/v0.2.0.tar.gz"
+transpiling = "../../../../components/rust/component-ts-transpiling/wit/deps/transpiling"
