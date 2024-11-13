@@ -3,7 +3,7 @@ import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -44,6 +44,7 @@ class WorkerInfo:
     name: str  # Unique identifier for the worker, e.g. "python_worker"
     lang: Language  # Language type supported by the worker
     loader: "WorkerLoader"  # Worker's loader instance
+    dependencies: List["WorkerLoader"] = field(default_factory=list)
 
 
 class WorkerLoader(ABC):
@@ -55,11 +56,14 @@ class WorkerLoader(ABC):
         task_id: Optional[str] = None,
         task_name: Optional[str] = None,
         config: Optional[PyEnvironmentConfig] = None,
+        dependencies: Optional[List[str]] = None,
     ) -> PyTaskHandle:
         task_spec = self._task_spec()
         task_id = task_id or f"{str(uuid.uuid4())}"
         task_name = task_name or task_id
-        task_info = TaskInfo.from_task(task_name, task_id, 3, task_spec)
+        task_info = TaskInfo.from_task(
+            task_name, task_id, 3, task_spec, dependencies=dependencies
+        )
         return await lyric.submit_task(task_info.to_core(), environment_config=config)
 
     @abstractmethod
@@ -98,6 +102,31 @@ class RawWasmWorkerLoader(WorkerLoader):
         return WasmTaskSpec(self._wasm_path, self._lang)
 
 
+class ComponentLoader(WorkerLoader):
+    """Loader for component.
+
+    Component is a wasi component that can be loaded as a worker.
+    """
+
+    pass
+
+
+class TypeScriptComponentLoader(ComponentLoader):
+    """Typescript component loader.
+
+    The typescript is supported by a lyric component that transpiles typescript to javascript.
+    """
+
+    def _task_spec(self) -> BaseTaskSpec:
+        try:
+            from lyric_component_ts_transpiling import TypeScriptWasmTaskSpec
+        except ImportError:
+            raise ImportError(
+                "lyric_component_ts_transpiling is not installed. Please install it with: pip install lyric-component-ts-transpiling"
+            )
+        return TypeScriptWasmTaskSpec()
+
+
 @dataclass
 class HandleItem:
     """Container for worker handle information and instance"""
@@ -105,6 +134,7 @@ class HandleItem:
     worker_info: WorkerInfo
     handle: PyTaskHandle
     environment_config: Optional[PyEnvironmentConfig] = None
+    dependencies: List[PyTaskHandle] = field(default_factory=list)
 
     @property
     def uid(self) -> str:
@@ -113,6 +143,15 @@ class HandleItem:
             self.environment_config.env_id() if self.environment_config else "none"
         )
         return f"{self.worker_info.name}_{config_id}"
+
+    @property
+    def task_id(self) -> str:
+        """Get the task ID.
+
+        Returns:
+            str: The task ID
+        """
+        return self.handle.task_id()
 
 
 class HandleManager:
@@ -136,6 +175,7 @@ class HandleManager:
         worker_info: WorkerInfo,
         environment_config: Optional[PyEnvironmentConfig] = None,
         ignore_load_error: bool = False,
+        dependencies: Optional[List[WorkerLoader]] = None,
     ) -> Optional[HandleItem]:
         """Get existing handle or create new one"""
         async with self._lock:
@@ -146,8 +186,16 @@ class HandleManager:
                 return self._handles[uid]
 
             try:
+                depend_ids = []
+                if dependencies:
+                    for dep in dependencies:
+                        hd = await dep.load_worker(
+                            self._lyric, config=environment_config
+                        )
+                        handle_item.dependencies.append(hd)
+                        depend_ids.append(hd.task_id())
                 handle = await worker_info.loader.load_worker(
-                    self._lyric, config=environment_config
+                    self._lyric, config=environment_config, dependencies=depend_ids
                 )
                 handle_item.handle = handle
                 self._handles[uid] = handle_item
@@ -258,8 +306,11 @@ class Lyric:
         self._workers[name] = worker_info
 
     async def load_worker(
-        self, worker_name: str, exec_env: Optional[EXEC_ENV] = None
-    ) -> None:
+        self,
+        worker_name: str,
+        exec_env: Optional[EXEC_ENV] = None,
+        dependencies: Optional[List[WorkerLoader]] = None,
+    ) -> Optional[HandleItem]:
         """Load specified worker
 
         Args:
@@ -271,7 +322,9 @@ class Lyric:
 
         worker_info = self._workers[worker_name]
         config = self._config_manager.get_environment_config(exec_env, worker_name)
-        await self._handle_manager.get_or_create_handler(worker_info, config, True)
+        return await self._handle_manager.get_or_create_handler(
+            worker_info, config, False, dependencies=dependencies
+        )
 
     async def load_default_workers(self) -> None:
         """Load all default workers"""

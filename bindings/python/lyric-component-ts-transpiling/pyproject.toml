@@ -1,20 +1,18 @@
 [project]
-name = "lyric-js-worker"
-version = "0.1.4"
+name = "lyric-component-ts-transpiling"
+version = "0.1.0"
 description = "Add your description here"
 authors = [
-    { name = "Fangyin Cheng", email = "staneyffer@gmail.com" },
+    { name = "Fangyin Cheng", email = "staneyffer@gmail.com" }
 ]
 dependencies = [
     "lyric-task",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 
 [build-system]
-requires = [
-    "hatchling",
-]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.rye]
@@ -25,9 +23,7 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = [
-    "src/lyric_js_worker",
-]
+packages = ["src/lyric_component_ts_transpiling"]
 include = [
-    "src/lyric_js_worker/*.wasm",
+    "src/lyric_component_ts_transpiling/*.wasm",
 ]

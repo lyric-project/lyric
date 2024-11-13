@@ -2,7 +2,9 @@ import os
 import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+
+import msgpack
 
 from .pickle import Deserializer, Serializer
 
@@ -101,7 +103,8 @@ class Language(BaseEnum):
     JAVASCRIPT = 1
     SHELL = 2
     RUST = 3
-    TYPESCRIPT = 4
+    WASI = 4
+    TYPESCRIPT = 5
 
 
 LanguageType = Union[Language, int, str]
@@ -141,8 +144,26 @@ class ExecutionUnit:
 class BaseTaskSpec(ABC):
 
     @abstractmethod
-    def to_execution_unit(self) -> ExecutionUnit:
-        """Convert task to execution unit"""
+    def to_execution_unit(
+        self, dependencies: Optional[List[str]] = None
+    ) -> ExecutionUnit:
+        """Convert task to execution unit.
+
+        Args:
+            dependencies (Optional[List[str]]): List of component IDs that this task depends on.
+                (The components IDs are the task IDs mostly)
+
+        Returns:
+            TaskExecutionUnit: The execution unit object
+        """
+
+    def serialize(self, data: Dict[str, Any]) -> bytes:
+        """Serialize data to binary format.
+
+        Args:
+            data (Dict[str, Any]): The data to serialize
+        """
+        return msgpack.packb(data)
 
     @abstractmethod
     def run(self):
@@ -158,11 +179,19 @@ class BaseTaskSpec(ABC):
 
 class ExecutableTaskSpec(BaseTaskSpec, ABC):
 
-    def to_execution_unit(self) -> ExecutionUnit:
+    def to_execution_unit(
+        self, dependencies: Optional[List[str]] = None
+    ) -> ExecutionUnit:
         code_data_format = DataFormat.PICKLE
         code_data = Serializer.serialize_to_binary(self)
+        data = {
+            "code": code_data,
+            "dependencies": dependencies or [],
+        }
         code_object = DataObject(
-            object_id=str(uuid.uuid4()), format=code_data_format.value, data=code_data
+            object_id=str(uuid.uuid4()),
+            format=code_data_format.value,
+            data=self.serialize(data),
         )
         return ExecutionUnit(
             unit_id=str(uuid.uuid4()), language=Language.PYTHON.value, code=code_object
@@ -187,11 +216,19 @@ class WasmTaskSpec(BaseTaskSpec):
             raise ValueError(f"Invalid language: {lang}")
         self.lang = lang
 
-    def to_execution_unit(self) -> ExecutionUnit:
+    def to_execution_unit(
+        self, dependencies: Optional[List[str]] = None
+    ) -> ExecutionUnit:
         code_data_format = DataFormat.RAW
-        code_data = self.wasm_path.encode("utf-8")
+        data = {
+            "path": self.wasm_path,
+            "dependencies": dependencies or [],
+        }
         code_object = DataObject(
-            object_id=str(uuid.uuid4()), format=code_data_format.value, data=code_data
+            object_id=str(uuid.uuid4()),
+            format=code_data_format.value,
+            # Serialize data to binary format(messagepack, it will be deserialized in the lyric worker)
+            data=self.serialize(data),
         )
         return ExecutionUnit(
             unit_id=str(uuid.uuid4()), language=self.lang.value, code=code_object

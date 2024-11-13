@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generic, List, Literal, TypeVar, Union, final, Tuple
+from typing import Any, Callable, Generic, List, Literal, Tuple, TypeVar, Union, final
 
 from typing_extensions import Self
 
@@ -434,7 +434,6 @@ class PyTaskResourceConfig:
         env_vars: Optional[List[Tuple[str, str]]] = None,
     ) -> None: ...
 
-
 @final
 class PyTaskHandle:
     """Handle for controlling and interacting with a running task.
@@ -446,6 +445,14 @@ class PyTaskHandle:
     The handle maintains a connection to the underlying task and provides async methods
     for task manipulation.
     """
+
+    def task_id(self) -> str:
+        """Get the task ID for the handle.
+
+        Returns:
+            Task ID for the handle
+        """
+        ...
 
     async def run(
         self, args: PyTaskCallArgs, resources: Optional[PyTaskResourceConfig] = None
@@ -582,7 +589,6 @@ class PyLyric:
     
     If the node is a driver, this will stop the driver and all workers.
     """
-
 
     def set_callback(self, callback: Callable[..., Any]) -> None: ...
     """Set a callback function for task worker.

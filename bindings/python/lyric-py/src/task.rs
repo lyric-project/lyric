@@ -154,6 +154,15 @@ impl PyDataObject {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ExecutionComponent {
+    // The wasm program path
+    pub path: String,
+    // The component ids that this component depends on
+    pub dependencies: Vec<String>,
+    // TODO: use wasm bytes instead of wasm path(can be run in distributed environment)
+}
+
 #[pymethods]
 impl PyTaskOutputObject {
     #[new]

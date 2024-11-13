@@ -246,3 +246,9 @@ impl From<String> for TaskID {
         TaskID(id)
     }
 }
+
+impl ToString for TaskID {
+    fn to_string(&self) -> String {
+        self.0.clone()
+    }
+}

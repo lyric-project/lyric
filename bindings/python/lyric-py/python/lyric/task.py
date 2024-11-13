@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import cloudpickle
 from lyric_task import BaseTaskSpec, ExecutableTaskSpec, WasmTaskSpec
@@ -97,8 +97,9 @@ class TaskInfo:
         exec_mode: int,
         task: BaseTaskSpec,
         input: Any = None,
+        dependencies: Optional[List[str]] = None,
     ):
-        exec_unit = task.to_execution_unit()
+        exec_unit = task.to_execution_unit(dependencies=dependencies)
         code_object = PyDataObject(
             object_id=exec_unit.code.object_id,
             format=exec_unit.code.format,
