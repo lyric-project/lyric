@@ -2,6 +2,7 @@ use crate::error::WasmError;
 use crate::Host;
 use anyhow::Context;
 use core::net::SocketAddr;
+use std::collections::HashSet;
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
@@ -55,10 +56,11 @@ impl WasmRuntime {
         &self,
         component_id: &str,
         wasm: Vec<u8>,
+        depends_on: Option<HashSet<String>>,
     ) -> Result<(), WasmError> {
         self.inner
             .host
-            .launch_component(component_id, wasm, None, None)
+            .launch_component(component_id, wasm, None, depends_on)
             .await
     }
 

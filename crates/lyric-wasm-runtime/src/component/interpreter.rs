@@ -3,7 +3,6 @@ use crate::capability::rpc_task;
 use crate::new_store;
 use anyhow::Context;
 use bytes::Bytes;
-use std::future::Future;
 
 pub mod wasmtime_handler_bindings {
     wasmtime::component::bindgen!({

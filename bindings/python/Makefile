@@ -4,12 +4,13 @@
 PY_WORKER_DIR = lyric-py-worker
 JS_WORKER_DIR = lyric-js-worker
 TASK_WORKER_DIR = lyric-task
+COMPONENT_TS_TRANSPILED_DIR = lyric-component-ts-transpiling
 
 .PHONY: all
 all: build ## Build all subprojects
 
 .PHONY: build
-build: build-task build-py-worker build-js-worker ## Build all subprojects
+build: build-task build-py-worker build-js-worker component-ts-tra ## Build all subprojects
 
 .PHONY: build-task
 build-task: ## Build the task dependency
@@ -26,6 +27,11 @@ build-py-worker: ## Build the Python worker
 build-js-worker: ## Build the JavaScript worker
 	@echo "Building JavaScript worker..."
 	$(MAKE) -C $(JS_WORKER_DIR) build
+
+.PHONY: component-ts-tra
+component-ts-tra: ## Build the component-ts-transpiling
+	@echo "Building component-ts-transpiling..."
+	$(MAKE) -C $(COMPONENT_TS_TRANSPILED_DIR) build
 
 .PHONY: clean
 clean: ## Clean all projects

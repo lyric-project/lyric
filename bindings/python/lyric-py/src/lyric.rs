@@ -3,7 +3,7 @@ use crate::env::PyEnvironmentConfig;
 use crate::error::pyerr_to_lyric_err;
 use crate::handle::PyTaskHandle;
 use crate::task::{
-    AsyncTryFrom, PyStreamDataObjectIter, PyTaskInfo, PyTaskOutputObject, PyTaskStateInfo,
+    AsyncTryFrom, ExecutionComponent, PyTaskInfo, PyTaskOutputObject, PyTaskStateInfo,
 };
 use crate::types::PyUnboundedReceiverStream;
 use chrono::Local;
@@ -22,6 +22,7 @@ use lyric_wasm_runtime::capability::wrpc::lyric::task::types;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyIterator, PyList, PyString};
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::panic;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
@@ -178,8 +179,10 @@ impl PyLyric {
                     Arc::new(copy_task_info),
                     handler,
                 );
+                let runtime: TokioRuntime = self.runtime.clone();
                 Ok(PyTaskHandle {
                     inner: Arc::new(Mutex::new(th)),
+                    runtime,
                 })
             }
             TaskStateResult::StreamTaskState(stream_state_info) => {
@@ -423,19 +426,21 @@ async fn _handle_submit_with_type(
                 {
                     match lyric
                         .with_wasm_runtime(move |rt| async move {
-                            // parse path from data
-                            let data_path = String::from_utf8(data).map_err(|e| {
+                            let exec_comp: ExecutionComponent = rmp_serde::from_slice(&data).map_err(|e| {
                                 Error::InternalError(format!("Failed to parse data: {:?}", e))
                             })?;
-                            let data = tokio::fs::read(data_path.as_str()).await.map_err(|e| {
+                            // parse path from data
+                            let data = tokio::fs::read(exec_comp.path.as_str()).await.map_err(|e| {
                                 Error::InternalError(format!("Failed to read data: {:?}", e))
                             })?;
                             tracing::info!(
-                                "Launching component: {:?} from path: {:?}",
+                                "Launching component: {:?} from path: {:?}, with dependencies: {:?}",
                                 task_id,
-                                data_path
+                                exec_comp.path,
+                                exec_comp.dependencies
                             );
-                            rt.launch_component(task_id.as_str(), data)
+                            let depends_on = HashSet::from_iter(exec_comp.dependencies);
+                            rt.launch_component(task_id.as_str(), data, Some(depends_on))
                                 .await
                                 .map_err(|e| {
                                     Error::InternalError(format!(

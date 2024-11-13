@@ -3,6 +3,7 @@ use crate::task::{PyDataObject, PyTaskStateInfo};
 use async_trait::async_trait;
 use futures::TryFutureExt;
 use lyric::task_ext::{ClientType, MsgpackDeserializeExt, MsgpackSerializeExt, TaskHandle};
+use lyric::TokioRuntime;
 use lyric_rpc::task::{DataFormat, DataObject};
 use lyric_wasm_runtime::Handler;
 use pyo3::prelude::*;
@@ -34,10 +35,19 @@ impl PyTaskCallArgs {
 #[derive(Clone)]
 pub struct PyTaskHandle {
     pub(crate) inner: Arc<Mutex<TaskHandle>>,
+    pub(crate) runtime: TokioRuntime,
 }
 
 #[pymethods]
 impl PyTaskHandle {
+    #[pyo3(name = "task_id")]
+    fn task_id(&self) -> PyResult<String> {
+        Ok(self.runtime.runtime.block_on(async {
+            let th = self.inner.lock().await;
+            th.task_description.task_id.to_string()
+        }))
+    }
+
     #[pyo3(name = "run", signature = (args, resources = None))]
     async fn run(
         &self,
@@ -56,7 +66,7 @@ impl PyTaskHandle {
             data: req_data.data.into(),
         };
         let th = self.inner.lock().await;
-        let rt = th.runtime.clone();
+        let rt: TokioRuntime = th.runtime.clone();
         let handler = th.copy_handler();
         drop(th);
 

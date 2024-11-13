@@ -104,6 +104,7 @@ class DefaultLyricDriver:
                 "PYTHON": default_worker,
                 "RUST": default_worker,
                 "JAVASCRIPT": default_worker,
+                "WASI": default_worker,
             },
             eventloop_worker_threads=eventloop_worker_threads,
             log_level=log_level,

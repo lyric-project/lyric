@@ -5,7 +5,10 @@ description = "Add your description here"
 authors = [
     { name = "Fangyin Cheng", email = "staneyffer@gmail.com" },
 ]
-dependencies = []
+dependencies = [
+    "cloudpickle",
+    "msgpack",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
