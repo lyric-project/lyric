@@ -46,10 +46,10 @@ pyo3 = { version = "0.22.5" }
 python3-dll-a = "0.2.10"
 bitflags = "2.6"
 deno_ast = { version = "0.43.3", default-features = false, features = ["transpiling"] }
-wasmtime = "26"
-wasmtime-wasi = "26"
-wasi-common = "26"
-wasmtime-wasi-http =  "26"
+wasmtime = { version = "26"}
+wasmtime-wasi = { version = "26"}
+wasi-common = { version = "26"}
+wasmtime-wasi-http = { version = "26"}
 wasmparser = { version = "0.219", default-features = false }
 wit-component = { version = "0.219", default-features = false }
 wasi-preview1-component-adapter-provider = { version = "25", default-features = false }
@@ -60,6 +60,7 @@ wrpc-runtime-wasmtime = { version = "0.25", default-features = false }
 wrpc-transport = { version = "0.28", default-features = false, features = ["net"]}
 hyper = "1.4"
 once_cell = "1.19"
+wrpc-interface-http = { version = "0.31", default-features = false}
 
 lyric = { version = "0.1.4", path = "crates/lyric", default-features = false }
 lyric-utils = { version = "0.1.4", path = "crates/lyric-utils", default-features = false }
