@@ -12,7 +12,19 @@ on:
     branches:
       - main
       - master
+    paths:
+      - 'crates/**'
+      - 'bindings/python/lyric-py/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/release-lyric-py.yml'
   pull_request:
+    paths:
+      - 'crates/**'
+      - 'bindings/python/lyric-py/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/release-lyric-py.yml'
   workflow_dispatch:
 
 permissions:
