@@ -10,7 +10,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "0.1.4"
+version = "0.1.5"
 authors = ["fangyinc <staneyffer@gmail.com>"]
 edition = "2021"
 homepage = "https://github.com/fangyinc/lyric"
@@ -26,9 +26,9 @@ chrono = "0.4.38"
 tonic = {version = "0.12.3", default-features = false}
 prost = "0.13"
 rmp-serde = "1.3.0"
-tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
-tracing-appender = "0.2.3"
+tracing = "0.1.4"
+tracing-subscriber = "0.3"
+tracing-appender = "0.2"
 lazy_static = "1.5.0"
 serde = { version = "1.0.209", features = ["derive"] }
 rand = { version = "0.8.5"}
@@ -62,8 +62,8 @@ hyper = "1.4"
 once_cell = "1.19"
 wrpc-interface-http = { version = "0.31", default-features = false}
 
-lyric = { version = "0.1.4", path = "crates/lyric", default-features = false }
-lyric-utils = { version = "0.1.4", path = "crates/lyric-utils", default-features = false }
-lyric-rpc = { version = "0.1.4", path = "crates/lyric-rpc", default-features = false }
-lyric-wasm-runtime = { version = "0.1.4", path = "crates/lyric-wasm-runtime", default-features = false }
-lyric-py = { version = "0.1.4", path = "bindings/python/lyric-py", default-features = false }
+lyric = { version = "0.1.5", path = "crates/lyric", default-features = false }
+lyric-utils = { version = "0.1.5", path = "crates/lyric-utils", default-features = false }
+lyric-rpc = { version = "0.1.5", path = "crates/lyric-rpc", default-features = false }
+lyric-wasm-runtime = { version = "0.1.5", path = "crates/lyric-wasm-runtime", default-features = false }
+lyric-py = { version = "0.1.5", path = "bindings/python/lyric-py", default-features = false }
