@@ -21,19 +21,25 @@ A Rust-powered secure sandbox for multi-language code execution, leveraging WebA
 **Install Lyric via pip:**
 
 ```bash
-pip install "lyric-py>=0.1.4"
+pip install "lyric-py>=0.1.5"
 ```
 
 **Install default Python webassembly worker:**
 
 ```bash
-pip install "lyric-py-worker>=0.1.4"
+pip install "lyric-py-worker>=0.1.5"
 ```
 
 **Install default JavaScript webassembly worker:**
 
 ```bash
-pip install "lyric-js-worker>=0.1.4"
+pip install "lyric-js-worker>=0.1.5"
+```
+
+**Optional: Install TypeScript transpiling component:**
+
+```bash
+pip install "lyric-component-ts-transpiling>=0.1.5"
 ```
 
 ### Basic Usage
