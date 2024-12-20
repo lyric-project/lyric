@@ -10,7 +10,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "0.1.5"
+version = "0.1.6"
 authors = ["fangyinc <staneyffer@gmail.com>"]
 edition = "2021"
 homepage = "https://github.com/fangyinc/lyric"
@@ -62,8 +62,8 @@ hyper = "1.4"
 once_cell = "1.19"
 wrpc-interface-http = { version = "0.31", default-features = false}
 
-lyric = { version = "0.1.5", path = "crates/lyric", default-features = false }
-lyric-utils = { version = "0.1.5", path = "crates/lyric-utils", default-features = false }
-lyric-rpc = { version = "0.1.5", path = "crates/lyric-rpc", default-features = false }
-lyric-wasm-runtime = { version = "0.1.5", path = "crates/lyric-wasm-runtime", default-features = false }
-lyric-py = { version = "0.1.5", path = "bindings/python/lyric-py", default-features = false }
+lyric = { version = "0.1.6", path = "crates/lyric", default-features = false }
+lyric-utils = { version = "0.1.6", path = "crates/lyric-utils", default-features = false }
+lyric-rpc = { version = "0.1.6", path = "crates/lyric-rpc", default-features = false }
+lyric-wasm-runtime = { version = "0.1.6", path = "crates/lyric-wasm-runtime", default-features = false }
+lyric-py = { version = "0.1.6", path = "bindings/python/lyric-py", default-features = false }

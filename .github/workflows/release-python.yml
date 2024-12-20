@@ -115,13 +115,17 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: musllinux-${{ matrix.platform.target }}
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter --manifest-path bindings/python/lyric-py/Cargo.toml
+          args: --release --out dist --interpreter '3.8 3.9 3.10 3.11 3.12 pypy3.9 pypy3.10' --manifest-path bindings/python/lyric-py/Cargo.toml
           sccache: 'true'
-          manylinux: musllinux_1_2
+          manylinux: musllinux_1_1
           docker-options: |
             -e PROTOC_ARCH=${{ matrix.platform.target }}
             -e PROTOC=/usr/local/bin/protoc
@@ -217,7 +221,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: x86_64
-          args: --release --out dist --find-interpreter --manifest-path bindings/python/lyric-py/Cargo.toml
+          args: --release --out dist --interpreter '3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10' --manifest-path bindings/python/lyric-py/Cargo.toml
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -250,7 +254,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: aarch64
-          args: --release --out dist --find-interpreter --manifest-path bindings/python/lyric-py/Cargo.toml
+          args: --release --out dist --interpreter '3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10' --manifest-path bindings/python/lyric-py/Cargo.toml
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
