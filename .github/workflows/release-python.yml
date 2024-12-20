@@ -123,7 +123,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter --manifest-path bindings/python/lyric-py/Cargo.toml
+          args: --release --out dist --interpreter '3.8 3.9 3.10 3.11 3.12 pypy3.9 pypy3.10' --manifest-path bindings/python/lyric-py/Cargo.toml
           sccache: 'true'
           manylinux: musllinux_1_1
           docker-options: |
