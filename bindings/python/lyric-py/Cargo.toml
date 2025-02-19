@@ -6,7 +6,7 @@ edition = { workspace = true }
 homepage = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
-readme = "../../../README.md"
+readme = { workspace = true }
 description = "Python bindings for Lyric: A Rust-powered secure sandbox for multi-language code execution, leveraging WebAssembly to provide high-performance runtime isolation for AI applications"
 
 include = [

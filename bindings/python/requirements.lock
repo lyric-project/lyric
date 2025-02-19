@@ -9,13 +9,18 @@
 #   generate-hashes: false
 #   universal: false
 
+-e file:lyric-component-ts-transpiling
 -e file:lyric-js-worker
 -e file:lyric-py
 -e file:lyric-py-worker
 -e file:lyric-task
+    # via lyric-component-ts-transpiling
+    # via lyric-js-worker
     # via lyric-py
     # via lyric-py-worker
 cloudpickle==3.1.0
     # via lyric-py
+    # via lyric-task
 msgpack==1.1.0
     # via lyric-py
+    # via lyric-task
