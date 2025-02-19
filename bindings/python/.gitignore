@@ -11,3 +11,5 @@ wheels/
 .rye/
 # wasm
 *.wasm
+
+lyric-py/README.md

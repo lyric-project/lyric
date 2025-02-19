@@ -69,7 +69,7 @@ build-wasm: build-task check-node
 	# to src directory and run setup.py
 	# Print current directory
 	echo "Current directory: $(PWD)"
-	cd ../../javascript/lyric-js-worker && npm run build
+	cd ../../javascript/lyric-js-worker && npm install && npm run build
 	cp ../../javascript/lyric-js-worker/javascript_worker.wasm src/lyric_js_worker/
 
 .PHONY: build
