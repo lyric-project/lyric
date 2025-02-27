@@ -211,6 +211,10 @@ The following diagram illustrates the architecture of Lyric:
 - [Notebook-Sandbox Execution](examples/notebook/lyric_sandbox_verification.ipynb): A Jupyter notebook demonstrating how to use Lyric to execute Python and JavaScript code in a sandboxed environment.
 
 
+## Development
+
+If you want to build your own worker, you can see [How to Add Your Dependencies](bindings/python/lyric-py-worker/README.md#how-to-add-your-dependencies) 
+
 ## Community Integrations
 
 - [DB-GPT](https://github.com/eosphoros-ai/DB-GPT) AI Native Data App Development framework with AWEL(Agentic Workflow Expression Language) and Agents
