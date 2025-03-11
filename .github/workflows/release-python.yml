@@ -42,10 +42,10 @@ jobs:
         platform:
           - runner: ubuntu-latest
             target: x86_64
-#          - runner: ubuntu-latest
-#            target: aarch64
-#          - runner: ubuntu-latest
-#            target: armv7
+          - runner: ubuntu-latest
+            target: aarch64
+          - runner: ubuntu-latest
+            target: armv7
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -55,6 +55,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: linux-${{ matrix.platform.target }}
+      - name: Setup QEMU
+        if: matrix.platform.target == 'aarch64' || matrix.platform.target == 'armv7'
+        uses: docker/setup-qemu-action@v1
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -76,6 +79,8 @@ jobs:
               PROTOC_ARCH="ppcle_64"
             elif [ "$PROTOC_ARCH" = "s390x" ]; then
               PROTOC_ARCH="s390_64"
+            elif [ "$PROTOC_ARCH" = "armv7" ]; then
+              PROTOC_ARCH="aarch_64"  # Use aarch_64 protoc for armv7 as well
             fi
             PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip"
             curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"
@@ -95,10 +100,10 @@ jobs:
         platform:
           - runner: ubuntu-latest
             target: x86_64
-#          - runner: ubuntu-latest
-#            target: aarch64
-#          - runner: ubuntu-latest
-#            target: armv7
+          - runner: ubuntu-latest
+            target: aarch64
+          - runner: ubuntu-latest
+            target: armv7
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -128,6 +133,8 @@ jobs:
               PROTOC_ARCH="x86_32"
             elif [ "$PROTOC_ARCH" = "aarch64" ]; then
               PROTOC_ARCH="aarch_64"
+            elif [ "$PROTOC_ARCH" = "armv7" ]; then
+              PROTOC_ARCH="aarch_64"  # Use aarch_64 protoc for armv7 as well
             fi
             PROTOC_ZIP="protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip"
             curl -OL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ZIP}"
