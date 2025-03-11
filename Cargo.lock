@@ -683,7 +683,7 @@ dependencies = [
 
 [[package]]
 name = "component-ts-transpiling"
-version = "0.1.7-rc0"
+version = "0.1.7"
 dependencies = [
  "deno_ast",
  "wit-bindgen",
@@ -2029,7 +2029,7 @@ checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
 
 [[package]]
 name = "lyric"
-version = "0.1.7-rc0"
+version = "0.1.7"
 dependencies = [
  "async-trait",
  "bollard",
@@ -2058,7 +2058,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-py"
-version = "0.1.7-rc0"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2084,7 +2084,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-rpc"
-version = "0.1.7-rc0"
+version = "0.1.7"
 dependencies = [
  "async-trait",
  "lyric-utils",
@@ -2097,7 +2097,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-utils"
-version = "0.1.7-rc0"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -2114,7 +2114,7 @@ dependencies = [
 
 [[package]]
 name = "lyric-wasm-runtime"
-version = "0.1.7-rc0"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-stream",

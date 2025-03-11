@@ -1,6 +1,6 @@
 [project]
 name = "lyric-py-worker"
-version = "0.1.7-rc0"
+version = "0.1.7"
 description = "Add your description here"
 authors = [
     { name = "Fangyin Cheng", email = "staneyffer@gmail.com" },
