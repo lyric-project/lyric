@@ -61,7 +61,6 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter --manifest-path bindings/python/lyric-py/Cargo.toml
           sccache: 'true'
-#          manylinux: auto
           manylinux: ${{ matrix.platform.target == 'aarch64' && '2_24' || 'auto' }}
           docker-options: |
             -e PROTOC_ARCH=${{ matrix.platform.target }}
@@ -88,12 +87,6 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
-#      - name: Install built wheel
-#        run: |
-#          pip install lyric-py --no-index --no-deps --find-links dist --force-reinstall
-#      - name: Basic import test
-#        run: |
-#          python -c "import lyric; print(lyric.__version__)"
 
   musllinux:
     runs-on: ${{ matrix.platform.runner }}
@@ -146,12 +139,6 @@ jobs:
         with:
           name: wheels-musllinux-${{ matrix.platform.target }}
           path: dist
-#      - name: Install built wheel
-#        run: |
-#          pip install lyric-py --no-index --no-deps --find-links dist --force-reinstall
-#      - name: Basic import test
-#        run: |
-#          python -c "import lyric; print(lyric.__version__)"
 
   windows:
     runs-on: ${{ matrix.platform.runner }}
@@ -195,15 +182,9 @@ jobs:
         with:
           name: wheels-windows-${{ matrix.platform.target }}
           path: dist
-#      - name: Install built wheel
-#        run: |
-#          pip install lyric-py --no-index --no-deps --find-links dist --force-reinstall
-#      - name: Basic import test
-#        run: |
-#          python -c "import lyric; print(lyric.__version__)"
 
   macos-x86_64:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -228,15 +209,9 @@ jobs:
         with:
           name: wheels-macos-x86_64
           path: dist
-#      - name: Install built wheel
-#        run: |
-#          pip install lyric-py --no-index --no-deps --find-links dist --force-reinstall
-#      - name: Basic import test
-#        run: |
-#          python -c "import lyric; print(lyric.__version__)"
 
   macos-aarch64:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -261,12 +236,6 @@ jobs:
         with:
           name: wheels-macos-aarch64
           path: dist
-#      - name: Install built wheel
-#        run: |
-#          pip install lyric-py --no-index --no-deps --find-links dist --force-reinstall
-#      - name: Basic import test
-#        run: |
-#          python -c "import lyric; print(lyric.__version__)"
 
   sdist:
     runs-on: ubuntu-latest
